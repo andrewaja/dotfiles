@@ -1,0 +1,5 @@
+pane	temp	0	1	:*	0	drew@DREW-DESKTOP:~/bin	:/home/drew/bin	0	zsh	:
+pane	temp	0	1	:*	1	nvim-smart.sh	:/home/drew/projects/log-analyzer	0	bash	:/bin/bash /home/drew/bin/nvim-smart.sh
+pane	temp	0	1	:*	2	save_tmux_workspace temp	:/home/drew/.config/nvim/lua/core/plugin_config	1	tmux	:tmux run-shell /home/drew/.tmux/plugins/tmux-resurrect/scripts/save.sh
+window	temp	0	:zsh	1	:*	2276,140x78,0,0[140x39,0,0,1,140x38,0,40{72x38,0,40,2,67x38,73,40,3}]	:
+state	temp	

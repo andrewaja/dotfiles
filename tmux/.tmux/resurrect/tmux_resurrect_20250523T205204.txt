@@ -1,0 +1,4 @@
+pane	rust-book	0	1	:*	0	nvim src/main.rs	:/home/drew/projects/rust/rectangles	0	nvim	:/tmp/.mount_nvimLxt8TJ/usr/bin/nvim src/main.rs
+pane	rust-book	0	1	:*	1	save_tmux_workspace rust-book	:/home/drew	1	tmux	:tmux run-shell /home/drew/.tmux/plugins/tmux-resurrect/scripts/save.sh
+window	rust-book	0	:zsh	1	:*	0329,78x59,0,0[78x36,0,0,1,78x22,0,37,2]	:
+state	rust-book	

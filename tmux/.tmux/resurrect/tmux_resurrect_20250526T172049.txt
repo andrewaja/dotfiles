@@ -1,0 +1,5 @@
+pane	mysession	0	1	:*	0	nvim .	:/home/drew/school	0	nvim	:nvim .
+pane	mysession	0	1	:*	1	tmux-detach	:/home/drew/.local/share/nvim/auto_session	1	tmux	:tmux run-shell /home/drew/.tmux/plugins/tmux-resurrect/scripts/save.sh
+pane	mysession	0	1	:*	2	nvim .	:/home/drew/projects	0	nvim	:nvim .
+window	mysession	0	:zsh	1	:*	1e06,140x78,0,0[140x39,0,0,1,140x38,0,40{70x38,0,40,2,69x38,71,40,3}]	:
+state	mysession	

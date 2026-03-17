@@ -1,0 +1,3 @@
+pane	rust-book	0	1	:*	0	save_tmux_workspace rust-book	:/home/drew	1	tmux	:tmux run-shell /home/drew/.tmux/plugins/tmux-resurrect/scripts/save.sh
+window	rust-book	0	:zsh	1	:*	b49d,56x43,0,0,0	:
+state	rust-book	

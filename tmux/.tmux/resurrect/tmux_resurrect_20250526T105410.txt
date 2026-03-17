@@ -1,0 +1,4 @@
+pane	rust-book	0	1	:*	0	nvim src/main.rs	:/home/drew/projects/rust/rust-book/enums	0	nvim	:nvim src/main.rs
+pane	rust-book	0	1	:*	1	save_tmux_workspace rust-book	:/home/drew/projects/rust/rust-book/enums	1	tmux	:tmux run-shell /home/drew/.tmux/plugins/tmux-resurrect/scripts/save.sh
+window	rust-book	0	:zsh	1	:*	a174,103x66,0,0[103x40,0,0,1,103x25,0,41,2]	:
+state	rust-book	

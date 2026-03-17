@@ -1,0 +1,5 @@
+pane	temp	0	1	:*	0	drew@DREW-DESKTOP:~	:/home/drew	0	zsh	:
+pane	temp	0	1	:*	1	nvim src/main.rs	:/home/drew/projects/rust/chess	0	nvim	:nvim src/main.rs
+pane	temp	0	1	:*	2	save_tmux_workspace temp	:/home/drew	1	tmux	:tmux run-shell /home/drew/.tmux/plugins/tmux-resurrect/scripts/save.sh
+window	temp	0	:tmux	1	:*	1e06,140x78,0,0[140x39,0,0,1,140x38,0,40{70x38,0,40,2,69x38,71,40,3}]	:
+state	temp	

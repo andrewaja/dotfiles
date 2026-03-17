@@ -1,0 +1,5 @@
+pane	test	0	1	:*	0	drew@DREW-DESKTOP:~	:/home/drew	0	zsh	:
+pane	test	0	1	:*	1	drew@DREW-DESKTOP:~/projects/log-analyzer	:/home/drew/projects/log-analyzer	0	zsh	:
+pane	test	0	1	:*	2	save_tmux_workspace temp	:/home/drew	1	tmux	:tmux run-shell /home/drew/.tmux/plugins/tmux-resurrect/scripts/save.sh
+window	test	0	:zsh	1	:*	1e06,140x78,0,0[140x39,0,0,1,140x38,0,40{70x38,0,40,2,69x38,71,40,3}]	:
+state	test	
