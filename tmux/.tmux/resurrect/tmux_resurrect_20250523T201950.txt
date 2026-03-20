@@ -1,4 +1,0 @@
-pane	test	0	1	:*	0	drew@drewslaptop:~	:/home/drew	0	zsh	:
-pane	test	0	1	:*	1	save_tmux_workspace dev	:/home/drew/.tmux/resurrect	1	tmux	:tmux run-shell /home/drew/.tmux/plugins/tmux-resurrect/scripts/save.sh
-window	test	0	:zsh	1	:*	7e4a,99x43,0,0[99x21,0,0,0,99x21,0,22,1]	:
-state	test	

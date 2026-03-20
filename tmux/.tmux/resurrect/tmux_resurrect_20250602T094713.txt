@@ -1,5 +1,0 @@
-pane	spur_full-model	0	1	:*	0	nvim main.cpp	:/home/drew/projects/spur/CU-Spur-Sean/fpga/original	0	nvim	:/tmp/.mount_nvim96FjfM/usr/bin/nvim main.cpp
-pane	spur_full-model	0	1	:*	1	nvim main.cpp	:/home/drew/projects/spur/CU-Spur-Sean/spurFPGA/CCE-CChunk	0	nvim	:/tmp/.mount_nvimLkzrzq/usr/bin/nvim main.cpp
-pane	spur_full-model	0	1	:*	2	save_tmux_workspace spur_full-model	:/home/drew	1	tmux	:tmux run-shell /home/drew/.tmux/plugins/tmux-resurrect/scripts/save.sh
-window	spur_full-model	0	:zsh	1	:*	7272,136x78,0,0[136x39,0,0,0,136x38,0,40{93x38,0,40,1,42x38,94,40,2}]	:
-state	spur_full-model	

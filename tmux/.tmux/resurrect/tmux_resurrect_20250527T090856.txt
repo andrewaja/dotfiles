@@ -1,4 +1,0 @@
-pane	temp	0	1	:*	0	drew@drewslaptop:~	:/home/drew	0	zsh	:
-pane	temp	0	1	:*	1	tmux-detach	:/home/drew	1	tmux	:tmux run-shell /home/drew/.tmux/plugins/tmux-resurrect/scripts/save.sh
-window	temp	0	:zsh	1	:*	18e9,86x47,0,0[86x23,0,0,0,86x23,0,24,1]	:
-state	temp	
