@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+cd "$(dirname "$0")/.."
+stow -D bash bin btop clangd git gtk htop mime nvim tmux wsl x11 zsh
