@@ -16,6 +16,9 @@ require_cmd git
 echo "==> installing system dependencies"
 "$ROOT_DIR/script/install-deps-ubuntu"
 
+echo "==> installing neovim"
+"$ROOT_DIR/script/install-neovim"
+
 echo "==> checking required tools after dependency install"
 require_cmd stow
 

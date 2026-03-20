@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ARCH="$(uname -m)"
+
+case "$ARCH" in
+  x86_64)
+    NVIM_TARBALL="nvim-linux-x86_64.tar.gz"
+    ;;
+  aarch64|arm64)
+    NVIM_TARBALL="nvim-linux-arm64.tar.gz"
+    ;;
+  *)
+    echo "Unsupported architecture: $ARCH" >&2
+    exit 1
+    ;;
+esac
+
+TMPDIR="$(mktemp -d)"
+trap 'rm -rf "$TMPDIR"' EXIT
+
+cd "$TMPDIR"
+curl -LO "https://github.com/neovim/neovim/releases/latest/download/${NVIM_TARBALL}"
+
+sudo rm -rf /opt/nvim
+sudo tar -C /opt -xzf "$NVIM_TARBALL"
+
+case "$ARCH" in
+  x86_64)
+    sudo mv /opt/nvim-linux-x86_64 /opt/nvim
+    ;;
+  aarch64|arm64)
+    sudo mv /opt/nvim-linux-arm64 /opt/nvim
+    ;;
+esac
+
+/opt/nvim/bin/nvim --version | head -n 1
