@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+require_cmd() {
+  command -v "$1" >/dev/null 2>&1 || {
+    echo "missing required command: $1" >&2
+    exit 1
+  }
+}
+
+echo "==> checking prerequisites"
+require_cmd git
+
+if ! command -v stow >/dev/null 2>&1; then
+  echo "stow is not installed."
+  echo "Install it first, then rerun bootstrap."
+  echo "On Ubuntu/WSL: sudo apt update && sudo apt install -y stow"
+  exit 1
+fi
+
+echo "==> installing system dependencies"
+"$ROOT_DIR/script/install-deps-ubuntu"
+
+echo "==> stowing dotfiles"
+"$ROOT_DIR/script/stow-dotfiles"
+
+echo "==> installing shell tooling"
+"$ROOT_DIR/script/install-shell-tools"
+
+echo "==> installing tmux plugins"
+"$ROOT_DIR/script/install-tmux-plugins"
+
+echo "==> installing neovim plugins"
+"$ROOT_DIR/script/install-nvim-plugins"
+
+echo "==> done"
+echo "You may need to restart your shell or run: exec zsh"
