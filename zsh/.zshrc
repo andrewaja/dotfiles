@@ -3,51 +3,58 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# Load tmux/Nvim workspace helpers
-[ -f ~/.tmux/tmux-workspaces.zsh ] && source ~/.tmux/tmux-workspaces.zsh
+# Keep PATH entries unique
+typeset -U path PATH
 
-# Oh My Zsh core setup
+# Core environment
 export ZSH="$HOME/.oh-my-zsh"
+export TERM="xterm-256color"
+export NVM_DIR="$HOME/.nvm"
+
+# Add personal/system paths once
+path=(
+  "$HOME/.local/bin"
+  "$HOME/bin"
+  /opt/nvim
+  $path
+)
+export PATH
+
+# Load tmux/Nvim workspace helpers
+[ -f "$HOME/.tmux/tmux-workspaces.zsh" ] && source "$HOME/.tmux/tmux-workspaces.zsh"
 
 # Theme
 ZSH_THEME="powerlevel10k/powerlevel10k"
-[[ -f ~/.p10k.zsh ]] && source ~/.p10k.zsh
 
 # Plugins
 plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
 
-# Load Oh My Zsh
-source $ZSH/oh-my-zsh.sh
+# Oh My Zsh
+source "$ZSH/oh-my-zsh.sh"
 
-# User config
+# Powerlevel10k config
+[[ -f "$HOME/.p10k.zsh" ]] && source "$HOME/.p10k.zsh"
 
 # Custom aliases/macros
-source "$HOME/.zsh/macros.zsh"
-
-# Environment
-export PATH="$HOME/bin:/opt/nvim:$PATH"
-export TERM="xterm-256color"
+[ -f "$HOME/.zsh/macros.zsh" ] && source "$HOME/.zsh/macros.zsh"
 
 # Node Version Manager
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"
 
-# Optional: Uncomment to adjust behavior
-# CASE_SENSITIVE="true"            # Case-sensitive completion
-HYPHEN_INSENSITIVE="true"        # Treat - and _ as the same
-# ENABLE_CORRECTION="true"         # Command auto-correction
-COMPLETION_WAITING_DOTS="true"   # Show dots while completing
-# DISABLE_AUTO_TITLE="true"        # Don't set terminal title
-# DISABLE_LS_COLORS="true"         # Don't colorize `ls` output
-# DISABLE_MAGIC_FUNCTIONS="true"   # Fix for broken paste behavior
-# DISABLE_UNTRACKED_FILES_DIRTY="true" # Speed up VCS status
-# HIST_STAMPS="yyyy-mm-dd"         # History timestamp format
+# Optional behavior
+# CASE_SENSITIVE="true"
+HYPHEN_INSENSITIVE="true"
+# ENABLE_CORRECTION="true"
+COMPLETION_WAITING_DOTS="true"
+# DISABLE_AUTO_TITLE="true"
+# DISABLE_LS_COLORS="true"
+# DISABLE_MAGIC_FUNCTIONS="true"
+# DISABLE_UNTRACKED_FILES_DIRTY="true"
+# HIST_STAMPS="yyyy-mm-dd"
 
-# Uncomment one of these to change update behavior
+# Oh My Zsh update behavior
 # zstyle ':omz:update' mode disabled
 # zstyle ':omz:update' mode auto
 # zstyle ':omz:update' mode reminder
 # zstyle ':omz:update' frequency 13
-
-export PATH="$HOME/.local/bin:$PATH"
