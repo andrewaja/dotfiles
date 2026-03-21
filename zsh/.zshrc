@@ -15,7 +15,7 @@ export NVM_DIR="$HOME/.nvm"
 path=(
   "$HOME/.local/bin"
   "$HOME/bin"
-  /opt/nvim
+  /opt/nvim/bin
   $path
 )
 export PATH
