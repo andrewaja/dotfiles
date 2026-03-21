@@ -1,4 +1,4 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-nvim --headless "+PackerSync" +qa
+/opt/nvim/bin/nvim --headless "+PackerSync" +qa
