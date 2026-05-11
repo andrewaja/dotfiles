@@ -3,4 +3,4 @@ set -euo pipefail
 
 cd "$(dirname "$0")/.."
 
-stow bash git zsh tmux nvim btop htop clangd gtk mime wsl x11 bin
+stow tmux nvim

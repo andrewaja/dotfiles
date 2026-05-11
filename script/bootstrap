@@ -10,25 +10,6 @@ require_cmd() {
   }
 }
 
-confirm_remove() {
-  local target="$1"
-
-  if [ -e "$target" ] || [ -L "$target" ]; then
-    echo "warning: $target already exists"
-    read -r -p "remove it and continue? [y/N] " reply
-    case "$reply" in
-      y|Y|yes|YES)
-        rm -rf "$target"
-        echo "removed $target"
-        ;;
-      *)
-        echo "aborted"
-        exit 1
-        ;;
-    esac
-  fi
-}
-
 echo "==> checking prerequisites"
 require_cmd git
 
@@ -38,22 +19,14 @@ echo "==> installing system dependencies"
 echo "==> checking required tools after dependency install"
 require_cmd stow
 
-confirm_remove "$HOME/.bashrc"
-
 echo "==> installing neovim"
 "$ROOT_DIR/script/install-neovim"
+
+echo "==> adding neovim to PATH"
+grep -qxF 'export PATH="$PATH:/opt/nvim/bin"' ~/.bashrc || echo 'export PATH="$PATH:/opt/nvim/bin"' >> ~/.bashrc
+source ~/.bashrc
 
 echo "==> stowing dotfiles"
 "$ROOT_DIR/script/stow-dotfiles"
 
-echo "==> installing shell tooling"
-"$ROOT_DIR/script/install-shell-tools"
-
-echo "==> installing tmux plugins"
-"$ROOT_DIR/script/install-tmux-plugins"
-
-echo "==> installing neovim plugins"
-"$ROOT_DIR/script/install-nvim-plugins"
-
 echo "==> done"
-echo "You may need to restart your shell or run: exec zsh"
