@@ -1,0 +1,5 @@
+# Defense-in-depth: these should never land inside the repo when
+# stowed with --no-folding. Ignored anyway in case a future re-stow
+# ever falls back to directory folding.
+bashrc.local
+history
