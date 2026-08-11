@@ -22,6 +22,19 @@ require_cmd stow
 echo "==> installing neovim"
 "$ROOT_DIR/script/install-neovim"
 
+echo "==> preparing ~/.bash directory"
+# Pre-create as a real directory so stow links files individually
+# instead of folding the whole thing into one directory-symlink
+# pointing into the repo — that would put untracked files
+# (bashrc.local, history) physically inside the repo tree.
+mkdir -p ~/.bash
+
+# Migrate any pre-existing bash history into the new location, once.
+# Guarded so re-running this script never clobbers newer history.
+if [ -f ~/.bash_history ] && [ ! -f ~/.bash/history ]; then
+    cp ~/.bash_history ~/.bash/history
+fi
+
 echo "==> stowing dotfiles"
 mv ~/.bashrc ~/.bashrc.default # preserve current bashrc if exists
 "$ROOT_DIR/script/stow-dotfiles"

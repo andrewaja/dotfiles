@@ -2,5 +2,4 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-
-stow nvim bash tmux
+stow --no-folding nvim bash tmux
