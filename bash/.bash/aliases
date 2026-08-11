@@ -1,1 +1,36 @@
 # ~/.bash/aliases — tracked in dotfiles, symlinked by stow.
+
+# ---- Color output ----
+alias grep='grep --color=auto'
+alias egrep='egrep --color=auto'
+
+# ---- Navigation ----
+alias ..='cd ..'
+alias ...='cd ../..'
+alias ....='cd ../../..'
+
+# ---- ls variants ----
+alias ls='ls --color=auto'
+alias la='ls -A --color=auto'    # almost-all: skip . and ..
+alias l='ls -CF --color=auto'    # compact, classify (/ * @ suffixes)
+alias ll='ls -alF --color=auto'
+
+# ---- git ----
+alias gs='git status'
+alias ga='git add'
+alias gc='git commit'
+alias gco='git checkout'
+alias gb='git branch'
+alias gp='git push'
+alias gl='git pull'
+alias gd='git diff'
+alias glog='git log --oneline --graph --decorate --all'
+
+# ---- Safety nets — confirm before clobbering/deleting ----
+alias rm='rm -i'
+alias cp='cp -i'
+alias mv='mv -i'
+
+# ---- Convenience ----
+alias c='clear'
+alias reload='source ~/.bashrc'
