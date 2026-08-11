@@ -65,6 +65,19 @@ NC='\[\e[0m\]'
 export PROMPT_DIRTRIM=4
 export PS1="${Cyan}\u@\h${NC}:${White}\w${NC}${Green}\$(parse_git_branch)${NC} \$ "
 
+# ---- Color output ----
+# ls: directories/files/symlinks etc. get distinct colors, driven by
+# LS_COLORS. Use ~/.dircolors to customize the palette if the default
+# ever looks off on a given terminal theme (`dircolors -p > ~/.dircolors`
+# to generate a starting point, then `eval "$(dircolors ~/.dircolors)"`).
+if command -v dircolors >/dev/null 2>&1; then
+    eval "$(dircolors -b)"
+fi
+alias ls='ls --color=auto'
+alias ll='ls -alF --color=auto'
+alias grep='grep --color=auto'
+alias egrep='egrep --color=auto'
+
 # ---- Handy functions ----
 mkcd () {  # make a dir and cd into it in one step
     mkdir -p "$1" && cd "$1"
