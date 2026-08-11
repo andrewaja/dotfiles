@@ -1,5 +1,6 @@
-# ~/.bashrc — portable, distro-agnostic
-# v1 - 2026-08-10
+# ~/.bashrc: executed by bash(1) for non-login shells.
+# see /usr/share/doc/bash/examples/startup-files (in the package bash-doc)
+# for examples
 
 # If not running interactively, don't do anything.
 # (Prevents scp/rsync/non-interactive ssh commands from breaking on
@@ -81,3 +82,12 @@ fi
 # ---- Optional local files (not tracked in dotfiles repo) ----
 [ -f ~/.bash_aliases ] && . ~/.bash_aliases
 [ -f ~/.bashrc.local ] && . ~/.bashrc.local   # machine-specific overrides go here
+
+# ---- Deduplicate PATH ----
+# Run last so it catches duplicates from everything above, and from
+# re-sourcing this file (e.g. every time you `source ~/.bashrc`).
+dedupe_path() {
+    PATH=$(printf '%s' "$PATH" | awk -v RS=: '!seen[$0]++ { printf "%s%s", sep, $0; sep=":" }')
+}
+dedupe_path
+export PATH
