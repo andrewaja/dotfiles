@@ -6,6 +6,7 @@ sudo apt install -y \
   git \
   stow \
   tmux \
+  screen \
   curl \
   unzip \
   ripgrep \

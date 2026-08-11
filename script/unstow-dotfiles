@@ -2,4 +2,4 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-stow -D nvim tmux 
+stow -D nvim bash tmux

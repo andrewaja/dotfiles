@@ -1,0 +1,83 @@
+# ~/.bashrc — portable, distro-agnostic
+# v1 - 2026-08-10
+
+# If not running interactively, don't do anything.
+# (Prevents scp/rsync/non-interactive ssh commands from breaking on
+# anything this file prints or does.)
+case $- in
+    *i*) ;;
+      *) return ;;
+esac
+
+# ---- History ----
+export HISTSIZE=10000
+export HISTFILESIZE=20000
+export HISTCONTROL=ignoredups:erasedups   # drop consecutive AND repeated dups
+shopt -s histappend                        # append to history file, don't overwrite
+shopt -s cmdhist                           # save multi-line commands as one entry
+shopt -s histreedit histverify
+
+# ---- Shell behavior ----
+shopt -s checkwinsize          # keep $LINES/$COLUMNS correct after terminal resize
+shopt -s cdspell               # autocorrect minor typos in `cd` arguments
+shopt -s autocd                # typing a dir name alone does `cd` into it
+shopt -s globstar              # enable ** for recursive globbing
+shopt -s no_empty_cmd_completion
+shopt -s extglob               # needed for a lot of programmable completion
+
+umask 0077                     # new files/dirs are private by default (owner-only)
+
+# ---- Editor ----
+export EDITOR=nvim
+export VISUAL=nvim
+export PATH="$PATH:/opt/nvim/bin"
+
+# ---- Programmable completion ----
+if ! shopt -oq posix; then
+    if [ -f /usr/share/bash-completion/bash_completion ]; then
+        . /usr/share/bash-completion/bash_completion
+    elif [ -f /etc/bash_completion ]; then
+        . /etc/bash_completion
+    fi
+fi
+
+# ---- Readline: Ctrl+Left/Right jumps by word ----
+bind '"\e[1;5C":forward-word'
+bind '"\e[1;5D":backward-word'
+
+# ---- Git-aware prompt ----
+parse_git_branch() {
+    local branch
+    branch=$(git branch 2>/dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/')
+    [ -n "$branch" ] && printf ' %s' "$branch"
+}
+
+
+# ---- Prompt colors (readline-safe: \[ \] wrap non-printing escapes) ----
+# Bold/bright variants — normal-intensity ANSI colors (e.g. plain blue)
+# have poor contrast on dark terminal themes.
+Cyan='\[\e[1;36m\]'    # user@host
+White='\[\e[1;37m\]'   # path
+Green='\[\e[1;32m\]'   # git branch
+NC='\[\e[0m\]'
+
+export PROMPT_DIRTRIM=4
+export PS1="${Cyan}\u@\h${NC}:${White}\w${NC}${Green}\$(parse_git_branch)${NC} \$ "
+
+# ---- Handy functions ----
+mkcd () {  # make a dir and cd into it in one step
+    mkdir -p "$1" && cd "$1"
+}
+
+dotfiles () {  # open shell config in $EDITOR
+    "$EDITOR" ~/.bashrc ~/.bash_aliases 2>/dev/null
+}
+
+# ---- WSL clipboard bridge (harmless no-op on non-WSL Linux) ----
+if grep -qi microsoft /proc/version 2>/dev/null; then
+    alias clip='clip.exe'
+fi
+
+# ---- Optional local files (not tracked in dotfiles repo) ----
+[ -f ~/.bash_aliases ] && . ~/.bash_aliases
+[ -f ~/.bashrc.local ] && . ~/.bashrc.local   # machine-specific overrides go here

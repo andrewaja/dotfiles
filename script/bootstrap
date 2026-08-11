@@ -22,11 +22,10 @@ require_cmd stow
 echo "==> installing neovim"
 "$ROOT_DIR/script/install-neovim"
 
-echo "==> adding neovim to PATH"
-grep -qxF 'export PATH="$PATH:/opt/nvim/bin"' ~/.bashrc || echo 'export PATH="$PATH:/opt/nvim/bin"' >> ~/.bashrc
-source ~/.bashrc
-
 echo "==> stowing dotfiles"
 "$ROOT_DIR/script/stow-dotfiles"
+
+echo "==> sourcing ~/.bashrc"
+source $HOME/.bashrc
 
 echo "==> done"
