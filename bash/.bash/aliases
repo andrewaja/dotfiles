@@ -34,4 +34,5 @@ alias mv='mv -i'
 # ---- Convenience ----
 alias C='clear'
 alias X='exit'
+alias aliases='cat ~/dotfiles/bash/.bash/aliases'
 alias reload='source ~/.bashrc'
