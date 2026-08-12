@@ -22,6 +22,9 @@ require_cmd stow
 echo "==> installing neovim"
 "$ROOT_DIR/script/install-neovim"
 
+echo "==> installing win32yank (no-op outside WSL)"
+"$ROOT_DIR/script/install-win32yank"
+
 echo "==> preparing ~/.bash directory"
 # Pre-create as a real directory so stow links files individually
 # instead of folding the whole thing into one directory-symlink

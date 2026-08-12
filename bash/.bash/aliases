@@ -32,5 +32,6 @@ alias cp='cp -i'
 alias mv='mv -i'
 
 # ---- Convenience ----
-alias c='clear'
+alias C='clear'
+alias X='exit'
 alias reload='source ~/.bashrc'

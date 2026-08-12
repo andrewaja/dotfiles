@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! grep -qi microsoft /proc/version 2>/dev/null; then
+    echo "not running under WSL — skipping win32yank"
+    exit 0
+fi
+
+if command -v win32yank.exe >/dev/null 2>&1; then
+    echo "win32yank already installed"
+    exit 0
+fi
+
+TMPDIR="$(mktemp -d)"
+trap 'rm -rf "$TMPDIR"' EXIT
+
+curl -sLo "$TMPDIR/win32yank.zip" https://github.com/equalsraf/win32yank/releases/latest/download/win32yank-x64.zip
+unzip -p "$TMPDIR/win32yank.zip" win32yank.exe > "$TMPDIR/win32yank.exe"
+chmod +x "$TMPDIR/win32yank.exe"
+sudo mv "$TMPDIR/win32yank.exe" /usr/local/bin/
