@@ -80,10 +80,24 @@ dotfiles () {
     "$EDITOR" ~/.bashrc ~/.bash/bashrc ~/.bash/aliases 2>/dev/null
 }
 
-# ---- WSL clipboard bridge ----
-# Harmless no-op on non-WSL Linux
+# ---- Clipboard bridge ----
+# WSL: win32yank if installed (bidirectional, correct line endings),
+# else clip.exe (copy-only fallback). Native Linux: wl-clipboard on
+# Wayland, xclip on X11. Defines nothing on a headless/tty session —
+# same as nvim's own clipboard detection, which falls back to OSC 52.
 if grep -qi microsoft /proc/version 2>/dev/null; then
-    alias clip='clip.exe'
+    if command -v win32yank.exe >/dev/null 2>&1; then
+        alias clip='win32yank.exe -i --crlf'
+        alias paste='win32yank.exe -o --lf'
+    else
+        alias clip='clip.exe'   # fallback if win32yank isn't installed
+    fi
+elif [ -n "${WAYLAND_DISPLAY:-}" ] && command -v wl-copy >/dev/null 2>&1; then
+    alias clip='wl-copy'
+    alias paste='wl-paste'
+elif [ -n "${DISPLAY:-}" ] && command -v xclip >/dev/null 2>&1; then
+    alias clip='xclip -selection clipboard'
+    alias paste='xclip -selection clipboard -o'
 fi
 
 # ---- Aliases + machine-local overrides ----
