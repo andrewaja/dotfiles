@@ -39,6 +39,7 @@ RemainAfterExit=yes
 [Install]
 WantedBy=multi-user.target
 ```
+(This is just a persistent alternative to `sudo ip link set dev eth2 mtu 1280`)
 
 **To deploy on a new WSL instance:**
 
