@@ -10,7 +10,6 @@ dotfiles/
   nvim/.config/nvim/      # Neovim config (lazy.nvim-based)
   tmux/                   # tmux config
   script/                 # bootstrap and helper scripts
-  wsl-zerotier-mtu/       # machine-specific fix, not stowed — see below
 ```
 
 ## Usage
