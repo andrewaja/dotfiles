@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Installs a Nerd Font (for nvim-web-devicons glyphs) on whatever OS
+# this is running on. Change FONT to switch; FONT_CASK must match the
+# Homebrew cask name for it.
+#
+#   macOS        -> Homebrew cask
+#   WSL          -> per-user install on the WINDOWS side (Windows
+#                   Terminal renders the font, not Linux)
+#   native Linux -> ~/.local/share/fonts + fc-cache
+#
+# The terminal app's font still has to be selected by hand afterwards.
+
+FONT="JetBrainsMono"
+FONT_CASK="font-jetbrains-mono-nerd-font"
+ZIP_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/${FONT}.zip"
+
+download_and_unzip() {   # $1 = destination dir
+    TMPDIR="$(mktemp -d)"
+    trap 'rm -rf "$TMPDIR"' EXIT
+    echo "downloading ${FONT}.zip"
+    curl -fsSLo "$TMPDIR/font.zip" "$ZIP_URL"
+    mkdir -p "$1"
+    unzip -qo "$TMPDIR/font.zip" '*.ttf' '*.otf' -d "$1" 2>/dev/null \
+        || unzip -qo "$TMPDIR/font.zip" -d "$1"
+}
+
+if [ "$(uname -s)" = Darwin ]; then
+    if brew list --cask "$FONT_CASK" >/dev/null 2>&1; then
+        echo "$FONT Nerd Font already installed (brew)"
+    else
+        brew install --cask "$FONT_CASK"
+    fi
+
+elif grep -qi microsoft /proc/version 2>/dev/null; then
+    # Windows per-user font install: copy the files into the user font
+    # dir and register them under HKCU. No admin needed, no GUI prompts.
+    LOCALAPPDATA_WIN="$(powershell.exe -NoProfile -Command '$env:LOCALAPPDATA' | tr -d '\r')"
+    FONT_DIR_WIN="${LOCALAPPDATA_WIN}\\Microsoft\\Windows\\Fonts"
+    FONT_DIR="$(wslpath -u "$FONT_DIR_WIN")"
+
+    if ls "$FONT_DIR"/${FONT}NerdFont*.ttf >/dev/null 2>&1; then
+        echo "$FONT Nerd Font already installed (Windows)"
+        exit 0
+    fi
+
+    download_and_unzip "$FONT_DIR"
+
+    # Build one registry script so we don't pay a powershell startup
+    # per file.
+    PS1_FILE="$TMPDIR/register.ps1"
+    {
+        echo '$key = "HKCU:\Software\Microsoft\Windows NT\CurrentVersion\Fonts"'
+        for f in "$FONT_DIR"/${FONT}NerdFont*.ttf; do
+            name="$(basename "$f" .ttf)"
+            printf 'New-ItemProperty -Path $key -Name "%s (TrueType)" -Value "%s\\%s.ttf" -PropertyType String -Force | Out-Null\n' \
+                "$name" "$FONT_DIR_WIN" "$name"
+        done
+    } > "$PS1_FILE"
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$(wslpath -w "$PS1_FILE")"
+    echo "installed to $FONT_DIR_WIN — restart Windows Terminal to see it"
+
+else
+    FONT_DIR="$HOME/.local/share/fonts/${FONT}NerdFont"
+    if ls "$FONT_DIR"/*.ttf >/dev/null 2>&1; then
+        echo "$FONT Nerd Font already installed ($FONT_DIR)"
+        exit 0
+    fi
+    download_and_unzip "$FONT_DIR"
+    command -v fc-cache >/dev/null 2>&1 && fc-cache -f "$FONT_DIR"
+    echo "installed to $FONT_DIR"
+fi

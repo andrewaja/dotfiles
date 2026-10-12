@@ -70,6 +70,7 @@ export PS1="${Cyan}\u@\h${NC}:${White}\w${NC}${Green}\$(parse_git_branch)${NC} \
 if command -v dircolors >/dev/null 2>&1; then
     eval "$(dircolors -b)"
 fi
+export CLICOLOR=1              # BSD/macOS ls: enable colors (harmless on GNU)
 
 # ---- Handy functions ----
 mkcd () {
@@ -77,15 +78,19 @@ mkcd () {
 }
 
 dotfiles () {
-    "$EDITOR" ~/.bashrc ~/.bash/bashrc ~/.bash/aliases 2>/dev/null
+    "$EDITOR" ~/.bashrc ~/.bash/bashrc ~/.config/shell/aliases 2>/dev/null
 }
 
 # ---- Clipboard bridge ----
-# WSL: win32yank if installed (bidirectional, correct line endings),
-# else clip.exe (copy-only fallback). Native Linux: wl-clipboard on
-# Wayland, xclip on X11. Defines nothing on a headless/tty session —
-# same as nvim's own clipboard detection, which falls back to OSC 52.
-if grep -qi microsoft /proc/version 2>/dev/null; then
+# macOS: pbcopy/pbpaste. WSL: win32yank if installed (bidirectional,
+# correct line endings), else clip.exe (copy-only fallback). Native
+# Linux: wl-clipboard on Wayland, xclip on X11. Defines nothing on a
+# headless/tty session — same as nvim's own clipboard detection, which
+# falls back to OSC 52.
+if command -v pbcopy >/dev/null 2>&1; then
+    alias clip='pbcopy'
+    alias paste='pbpaste'
+elif grep -qi microsoft /proc/version 2>/dev/null; then
     if command -v win32yank.exe >/dev/null 2>&1; then
         alias clip='win32yank.exe -i --crlf'
         alias paste='win32yank.exe -o --lf'
@@ -101,7 +106,8 @@ elif [ -n "${DISPLAY:-}" ] && command -v xclip >/dev/null 2>&1; then
 fi
 
 # ---- Aliases + machine-local overrides ----
-[ -f ~/.bash/aliases ] && . ~/.bash/aliases
+alias reload='source ~/.bashrc'
+[ -f ~/.config/shell/aliases ] && . ~/.config/shell/aliases
 [ -f ~/.bash/bashrc.local ] && . ~/.bash/bashrc.local # machine-specific overrides go here
 
 # ---- Deduplicate PATH ----

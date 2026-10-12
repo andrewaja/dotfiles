@@ -10,4 +10,5 @@ sudo apt install -y \
   curl \
   unzip \
   ripgrep \
-  fd-find 
+  fd-find \
+  fontconfig

@@ -1,4 +1,6 @@
-# ~/.bash/aliases — tracked in dotfiles, symlinked by stow.
+# ~/.config/shell/aliases — tracked in dotfiles, symlinked by stow.
+# Shared between bash and zsh; keep it POSIX-ish (no shell-specific
+# syntax). Shell-specific aliases (e.g. `reload`) live in each rc file.
 
 # ---- Color output ----
 alias grep='grep --color=auto'
@@ -10,6 +12,8 @@ alias ...='cd ../..'
 alias ....='cd ../../..'
 
 # ---- ls variants ----
+# --color=auto works on GNU ls and on macOS 13+ (BSD ls). CLICOLOR is
+# also exported from the rc files as a fallback for older BSD ls.
 alias ls='ls --color=auto'
 alias la='ls -A --color=auto'    # almost-all: skip . and ..
 alias l='ls -CF --color=auto'    # compact, classify (/ * @ suffixes)
@@ -34,5 +38,4 @@ alias mv='mv -i'
 # ---- Convenience ----
 alias C='clear'
 alias X='exit'
-alias aliases='cat ~/dotfiles/bash/.bash/aliases'
-alias reload='source ~/.bashrc'
+alias aliases='cat ~/.config/shell/aliases'

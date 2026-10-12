@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+. "$ROOT_DIR/script/packages"   # sets SHELL_PKG and PACKAGES
 
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -13,46 +14,69 @@ require_cmd() {
 echo "==> checking prerequisites"
 require_cmd git
 
-echo "==> installing system dependencies"
-"$ROOT_DIR/script/install-deps-ubuntu"
+case "$(uname -s)" in
+  Darwin)
+    echo "==> installing system dependencies (Homebrew)"
+    "$ROOT_DIR/script/install-deps-macos"
+    # Bring brew onto PATH for the rest of this script.
+    if [ -x /opt/homebrew/bin/brew ]; then eval "$(/opt/homebrew/bin/brew shellenv)"
+    elif [ -x /usr/local/bin/brew ]; then eval "$(/usr/local/bin/brew shellenv)"; fi
+    # neovim comes from brew above; win32yank is WSL-only.
+    ;;
+  *)
+    echo "==> installing system dependencies (apt)"
+    "$ROOT_DIR/script/install-deps-ubuntu"
+
+    echo "==> installing neovim"
+    "$ROOT_DIR/script/install-neovim"
+
+    echo "==> installing win32yank (no-op outside WSL)"
+    "$ROOT_DIR/script/install-win32yank"
+    ;;
+esac
+
+echo "==> installing nerd font"
+"$ROOT_DIR/script/install-nerd-font"
 
 echo "==> checking required tools after dependency install"
 require_cmd stow
 
-echo "==> installing neovim"
-"$ROOT_DIR/script/install-neovim"
+# Per-shell paths: the rc stub bash/zsh hardcodes, the dir holding the
+# real config, and the shell's default history file to migrate from.
+case "$SHELL_PKG" in
+  zsh)  RC=~/.zshrc;  RC_DIR=~/.zsh;  LOCAL=zshrc.local;  OLD_HIST=~/.zsh_history  ;;
+  bash) RC=~/.bashrc; RC_DIR=~/.bash; LOCAL=bashrc.local; OLD_HIST=~/.bash_history ;;
+esac
 
-echo "==> installing win32yank (no-op outside WSL)"
-"$ROOT_DIR/script/install-win32yank"
-
-echo "==> preparing ~/.bash directory"
+echo "==> preparing $RC_DIR directory"
 # Pre-create as a real directory so stow links files individually
 # instead of folding the whole thing into one directory-symlink
 # pointing into the repo — that would put untracked files
-# (bashrc.local, history) physically inside the repo tree.
-mkdir -p ~/.bash
+# (*.local, history) physically inside the repo tree.
+mkdir -p "$RC_DIR"
 
-# Migrate any pre-existing bash history into the new location, once.
+# Migrate any pre-existing history into the new location, once.
 # Guarded so re-running this script never clobbers newer history.
-if [ -f ~/.bash_history ] && [ ! -f ~/.bash/history ]; then
-    cp ~/.bash_history ~/.bash/history
+if [ -f "$OLD_HIST" ] && [ ! -f "$RC_DIR/history" ]; then
+    cp "$OLD_HIST" "$RC_DIR/history"
 fi
 
 # Seed the machine-local override file if it doesn't exist yet.
 # Guarded so re-running this script never clobbers existing content.
-if [ ! -f ~/.bash/bashrc.local ]; then
-    cat > ~/.bash/bashrc.local <<'EOF'
-# ~/.bash/bashrc.local — machine-specific overrides, NOT tracked in
-# the dotfiles repo (see bash/.bash/.gitignore). Sourced automatically
-# by ~/.bash/bashrc if present.
-EOF
+if [ ! -f "$RC_DIR/$LOCAL" ]; then
+    cat > "$RC_DIR/$LOCAL" <<EOT
+# $RC_DIR/$LOCAL — machine-specific overrides, NOT tracked in
+# the dotfiles repo (see $SHELL_PKG/.$SHELL_PKG/.gitignore). Sourced
+# automatically by $RC_DIR/${SHELL_PKG}rc if present.
+EOT
 fi
 
-echo "==> stowing dotfiles"
-mv ~/.bashrc ~/.bashrc.default # preserve current bashrc if exists
+echo "==> stowing dotfiles: ${PACKAGES[*]}"
+# Preserve a pre-existing rc file (but not a symlink from an earlier
+# stow run, which would make re-running this script break the link).
+if [ -f "$RC" ] && [ ! -L "$RC" ]; then
+    mv "$RC" "$RC.default"
+fi
 "$ROOT_DIR/script/stow-dotfiles"
 
-echo "==> sourcing ~/.bashrc"
-source $HOME/.bashrc
-
-echo "==> done"
+echo "==> done — open a new terminal, or run: exec $SHELL_PKG"
