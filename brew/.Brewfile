@@ -1,7 +1,10 @@
-# Homebrew packages for a macOS machine. Installed by
-# script/install-deps-macos via `brew bundle`. Add to this file rather
-# than to the script. Re-run `brew bundle --file=~/dotfiles/Brewfile`
-# (or script/install-deps-macos) after editing.
+# Homebrew packages for a macOS machine. Stowed to ~/.Brewfile (the
+# `brew bundle --global` location) and installed by
+# script/install-deps-macos. Add to this file rather than to the script.
+#
+#   brew bundle --global            install anything missing
+#   brew bundle check --global      is everything installed?
+#   brew bundle cleanup --global    list what's installed but not in here
 #
 # The Nerd Font cask is intentionally NOT here: script/install-nerd-font
 # owns it so the font name lives in one place across all OSes.

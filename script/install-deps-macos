@@ -26,8 +26,9 @@ fi
 eval "$("$BREW" shellenv)"
 
 # git, curl, unzip, screen ship with macOS / the Command Line Tools.
-# Everything else is listed in the Brewfile.
-brew bundle --file="$ROOT_DIR/Brewfile"
+# Everything else is listed in the Brewfile (read from the repo here
+# because this runs before stow links it to ~/.Brewfile).
+brew bundle --file="$ROOT_DIR/brew/.Brewfile"
 
 # Python libraries the ~/research runbooks import. Homebrew's python
 # refuses bare pip installs (PEP 668); these are small pure-python

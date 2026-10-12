@@ -6,3 +6,4 @@ case "$(uname -s)" in
   *)      SHELL_PKG=bash ;;
 esac
 PACKAGES=(nvim tmux shell "$SHELL_PKG")
+[ "$SHELL_PKG" = zsh ] && PACKAGES+=(brew)   # ~/.Brewfile, macOS only
