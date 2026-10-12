@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
 # Homebrew: install if missing. The installer prompts for sudo.
 if ! command -v brew >/dev/null 2>&1 && [ ! -x /opt/homebrew/bin/brew ]; then
     echo "==> installing Homebrew"
@@ -24,9 +26,11 @@ fi
 eval "$("$BREW" shellenv)"
 
 # git, curl, unzip, screen ship with macOS / the Command Line Tools.
-brew install \
-  stow \
-  tmux \
-  ripgrep \
-  fd \
-  neovim
+# Everything else is listed in the Brewfile (read from the repo here
+# because this runs before stow links it to ~/.Brewfile).
+brew bundle --file="$ROOT_DIR/brew/.Brewfile"
+
+# Python libraries the ~/research runbooks import. Homebrew's python
+# refuses bare pip installs (PEP 668); these are small pure-python
+# libs with no system-package equivalent, so override it.
+"$(brew --prefix)/bin/python3" -m pip install --quiet --break-system-packages pyyaml
