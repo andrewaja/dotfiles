@@ -1,0 +1,129 @@
+# ~/.zsh/zshrc — sourced by the ~/.zshrc stub. This is the file to
+# actually edit. Mirrors ~/.bash/bashrc option-for-option; comments
+# note where zsh differs or already does the bash thing by default.
+
+# If not running interactively, don't do anything.
+[[ -o interactive ]] || return
+
+# ---- History ----
+HISTFILE=~/.zsh/history        # relocated; not the zsh default ~/.zsh_history
+HISTSIZE=10000
+SAVEHIST=20000
+setopt HIST_IGNORE_DUPS        # ignoredups
+setopt HIST_IGNORE_ALL_DUPS    # erasedups
+setopt HIST_SAVE_NO_DUPS
+setopt INC_APPEND_HISTORY      # histappend (and write as you go)
+setopt HIST_VERIFY             # histverify: expand !-history, then let me confirm
+# cmdhist:   zsh already stores multi-line commands as one entry.
+# histreedit: no zsh equivalent.
+
+# ---- Shell behavior ----
+# checkwinsize: zsh tracks $LINES/$COLUMNS natively.
+setopt AUTO_CD                 # autocd: typing a dir name alone does `cd` into it
+setopt EXTENDED_GLOB           # extglob-ish: richer glob operators
+# globstar: ** recursive globbing is built into zsh.
+# cdspell:  bash silently fixes `cd` typos; zsh's CORRECT prompts for
+#           every command instead, which is more annoying than helpful.
+#           Left off.
+# no_empty_cmd_completion: not needed; see the completion block.
+
+umask 0077                     # new files/dirs are private by default (owner-only)
+
+# ---- Editor ----
+export EDITOR=nvim
+export VISUAL=nvim
+export PATH="$PATH:/opt/nvim/bin"
+
+# ---- Keymap ----
+# zsh switches to vi keybindings when $EDITOR contains "vi" — and
+# "nvim" does. Force emacs mode so the line editor behaves like bash.
+bindkey -e
+
+# ---- Completion ----
+# Homebrew puts completions in its own site-functions dir; brew
+# shellenv (in ~/.zprofile) sets HOMEBREW_PREFIX before this runs.
+if [ -n "${HOMEBREW_PREFIX:-}" ]; then
+    fpath=("$HOMEBREW_PREFIX/share/zsh/site-functions" $fpath)
+fi
+autoload -Uz compinit && compinit
+zstyle ':completion:*' menu select                         # arrow-key menu
+zstyle ':completion:*' matcher-list 'm:{a-z}={A-Za-z}'     # case-insensitive
+
+# ---- Keybindings: Ctrl+Left/Right jumps by word ----
+bindkey '^[[1;5C' forward-word
+bindkey '^[[1;5D' backward-word
+# macOS Terminal/iTerm send ESC-b / ESC-f for Option+Left/Right
+bindkey '^[b' backward-word
+bindkey '^[f' forward-word
+# Make Home/End/Delete behave as expected in Terminal.app
+bindkey '^[[H' beginning-of-line
+bindkey '^[[F' end-of-line
+bindkey '^[[3~' delete-char
+
+# ---- Git-aware prompt ----
+autoload -Uz vcs_info
+zstyle ':vcs_info:*' enable git
+zstyle ':vcs_info:git:*' formats ' (%b)'
+precmd() { vcs_info }
+
+# ---- Prompt ----
+# %B/%b bold, %F{..}/%f color, %n user, %m host, %~ cwd with ~ prefix.
+# %(5~|.../%4~|%~) mirrors PROMPT_DIRTRIM=4: keep the last 4 path
+# components once the path is 5 or more deep.
+setopt PROMPT_SUBST
+PS1='%B%F{cyan}%n@%m%f%b:%B%F{white}%(5~|.../%4~|%~)%f%b%B%F{green}${vcs_info_msg_0_}%f%b $ '
+
+# ---- Color output ----
+# GNU ls: LS_COLORS via dircolors (see ~/.bash/bashrc for the note on
+# customizing the palette with ~/.dircolors).
+if command -v dircolors >/dev/null 2>&1; then
+    eval "$(dircolors -b)"
+fi
+export CLICOLOR=1              # BSD/macOS ls: enable colors (harmless on GNU)
+# Reuse LS_COLORS in the completion menu when we have it.
+[ -n "${LS_COLORS:-}" ] && zstyle ':completion:*' list-colors "${(s.:.)LS_COLORS}"
+
+# ---- Handy functions ----
+mkcd () {
+    mkdir -p "$1" && cd "$1"
+}
+
+dotfiles () {
+    "$EDITOR" ~/.zshrc ~/.zsh/zshrc ~/.config/shell/aliases 2>/dev/null
+}
+
+# ---- Clipboard bridge ----
+# macOS: pbcopy/pbpaste. WSL: win32yank if installed (bidirectional,
+# correct line endings), else clip.exe (copy-only fallback). Native
+# Linux: wl-clipboard on Wayland, xclip on X11. Defines nothing on a
+# headless/tty session — same as nvim's own clipboard detection, which
+# falls back to OSC 52.
+if command -v pbcopy >/dev/null 2>&1; then
+    alias clip='pbcopy'
+    alias paste='pbpaste'
+elif grep -qi microsoft /proc/version 2>/dev/null; then
+    if command -v win32yank.exe >/dev/null 2>&1; then
+        alias clip='win32yank.exe -i --crlf'
+        alias paste='win32yank.exe -o --lf'
+    else
+        alias clip='clip.exe'   # fallback if win32yank isn't installed
+    fi
+elif [ -n "${WAYLAND_DISPLAY:-}" ] && command -v wl-copy >/dev/null 2>&1; then
+    alias clip='wl-copy'
+    alias paste='wl-paste'
+elif [ -n "${DISPLAY:-}" ] && command -v xclip >/dev/null 2>&1; then
+    alias clip='xclip -selection clipboard'
+    alias paste='xclip -selection clipboard -o'
+fi
+
+# ---- Aliases + machine-local overrides ----
+alias reload='source ~/.zshrc'
+[ -f ~/.config/shell/aliases ] && . ~/.config/shell/aliases
+[ -f ~/.zsh/zshrc.local ] && . ~/.zsh/zshrc.local # machine-specific overrides go here
+
+# ---- Deduplicate PATH ----
+# zsh keeps $path and $PATH in sync; -U makes the array unique, which
+# does what bash's dedupe_path() does. Run last so it catches
+# duplicates from everything above.
+typeset -U path PATH
+export PATH

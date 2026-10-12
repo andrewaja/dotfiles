@@ -6,7 +6,9 @@ Personal dotfiles, managed with [GNU Stow](https://www.gnu.org/software/stow/). 
 
 ```
 dotfiles/
-  bash/                   # shell config
+  shell/.config/shell/    # aliases shared by bash and zsh
+  bash/                   # bash config (Linux / WSL)
+  zsh/                    # zsh config (macOS) — mirrors bash/ option-for-option
   nvim/.config/nvim/      # Neovim config (lazy.nvim-based)
   tmux/                   # tmux config
   script/                 # bootstrap and helper scripts
@@ -14,7 +16,14 @@ dotfiles/
 
 ## Usage
 
-Run `script/bootstrap` for first-time setup on a fresh machine.
+Run `script/bootstrap` for first-time setup on a fresh machine. It detects the OS:
+
+- **Linux / WSL:** installs deps with apt, neovim from the GitHub tarball, win32yank under WSL, and stows `nvim tmux shell bash`.
+- **macOS:** installs Homebrew if missing (adds `brew shellenv` to `~/.zprofile`), installs deps with brew, and stows `nvim tmux shell zsh`. zsh is the macOS login shell, so the bash package is left alone; the stock `/bin/bash` is 3.2 and can't run it anyway.
+
+`script/stow-dotfiles` / `script/unstow-dotfiles` pick the same package set (see `script/packages`).
+
+Machine-specific overrides go in `~/.bash/bashrc.local` or `~/.zsh/zshrc.local` — both are untracked and sourced automatically.
 
 ### Note: WSL mirrored networking + ZeroTier MTU hang
 

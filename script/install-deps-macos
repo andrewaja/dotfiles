@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Homebrew: install if missing. The installer prompts for sudo.
+if ! command -v brew >/dev/null 2>&1 && [ ! -x /opt/homebrew/bin/brew ]; then
+    echo "==> installing Homebrew"
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+fi
+
+# Apple Silicon installs to /opt/homebrew, Intel to /usr/local.
+if [ -x /opt/homebrew/bin/brew ]; then
+    BREW=/opt/homebrew/bin/brew
+else
+    BREW=/usr/local/bin/brew
+fi
+
+# Make brew available in every login shell. ~/.zprofile is NOT stowed
+# (it's the Homebrew-recommended home for this line and may hold other
+# machine-local setup), so append it once, guarded.
+if ! grep -qs 'brew shellenv' ~/.zprofile; then
+    echo "==> adding brew shellenv to ~/.zprofile"
+    printf '\neval "$(%s shellenv zsh)"\n' "$BREW" >> ~/.zprofile
+fi
+eval "$("$BREW" shellenv)"
+
+# git, curl, unzip, screen ship with macOS / the Command Line Tools.
+brew install \
+  stow \
+  tmux \
+  ripgrep \
+  fd \
+  neovim

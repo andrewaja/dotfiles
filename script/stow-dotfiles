@@ -2,4 +2,5 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-stow --no-folding nvim bash tmux
+. script/packages
+stow --no-folding "${PACKAGES[@]}"

@@ -1,0 +1,8 @@
+# Sourced by stow-dotfiles / unstow-dotfiles / bootstrap. Picks the
+# stow packages for this OS: zsh is the macOS login shell, bash is the
+# one we use on Linux/WSL. Everything else is shared.
+case "$(uname -s)" in
+  Darwin) SHELL_PKG=zsh ;;
+  *)      SHELL_PKG=bash ;;
+esac
+PACKAGES=(nvim tmux shell "$SHELL_PKG")
