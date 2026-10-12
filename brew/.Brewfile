@@ -20,3 +20,6 @@ brew "neovim"
 brew "poppler"     # pdftotext / pdfinfo for the heilmeier-extractor skill
 brew "yq"          # proxmox-mgmt runbooks
 brew "python"      # modern python3; system one is 3.9 with no PyYAML
+
+# ---- apps ----
+cask "zerotier-one"   # pkg installer; prompts for sudo during brew bundle
