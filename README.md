@@ -21,6 +21,8 @@ Run `script/bootstrap` for first-time setup on a fresh machine. It detects the O
 - **Linux / WSL:** installs deps with apt, neovim from the GitHub tarball, win32yank under WSL, and stows `nvim tmux shell bash`.
 - **macOS:** installs Homebrew if missing (adds `brew shellenv` to `~/.zprofile`), installs deps with brew, and stows `nvim tmux shell zsh`. zsh is the macOS login shell, so the bash package is left alone; the stock `/bin/bash` is 3.2 and can't run it anyway.
 
+On every OS it also runs `script/install-nerd-font` (JetBrainsMono Nerd Font, for the nvim-web-devicons glyphs): Homebrew cask on macOS, per-user Windows install under WSL (the terminal is a Windows app), `~/.local/share/fonts` on native Linux. Selecting the font in the terminal app is still a manual step.
+
 `script/stow-dotfiles` / `script/unstow-dotfiles` pick the same package set (see `script/packages`).
 
 Machine-specific overrides go in `~/.bash/bashrc.local` or `~/.zsh/zshrc.local` — both are untracked and sourced automatically.

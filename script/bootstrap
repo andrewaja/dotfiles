@@ -35,6 +35,9 @@ case "$(uname -s)" in
     ;;
 esac
 
+echo "==> installing nerd font"
+"$ROOT_DIR/script/install-nerd-font"
+
 echo "==> checking required tools after dependency install"
 require_cmd stow
 

@@ -30,8 +30,3 @@ brew install \
   ripgrep \
   fd \
   neovim
-
-# Nerd Font for the nvim-web-devicons glyphs in the nvim config.
-# After install, select "JetBrainsMono Nerd Font Mono" in the terminal
-# app's profile settings (it can't be set from the CLI).
-brew install --cask font-jetbrains-mono-nerd-font
