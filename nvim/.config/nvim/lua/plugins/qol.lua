@@ -39,6 +39,10 @@ return {
 	{
 		"folke/snacks.nvim",
 		priority = 1000,
+		lazy = false, --keys would otherwise make it lazy, and bigfile needs it at startup
+		keys = {
+			{"<leader>bd", function() Snacks.bufdelete() end, desc = "Close current buffer, keep the window layout"},
+		},
 		opts = {
 			bigfile = {
 				notify = true,

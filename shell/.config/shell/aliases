@@ -39,3 +39,14 @@ alias mv='mv -i'
 alias C='clear'
 alias X='exit'
 alias aliases='cat ~/.config/shell/aliases'
+
+# ---- Keybind lookup ----
+# `keys` lists every custom nvim/tmux bind; `keys <word>` filters them
+# (case-insensitive), e.g. `keys split`, `keys tmux`, `keys leader`.
+keys() {
+    if [ $# -eq 0 ]; then
+        grep -v -e '^#' -e '^$' ~/.config/shell/keybinds
+    else
+        grep -v -e '^#' -e '^$' ~/.config/shell/keybinds | grep -i --color=auto -- "$*"
+    fi
+}

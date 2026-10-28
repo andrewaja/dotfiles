@@ -1,0 +1,61 @@
+# ~/.config/shell/keybinds -- tracked in dotfiles, symlinked by stow.
+# Custom nvim and tmux keybinds, one per line, for `keys <word>` (see
+# ~/.config/shell/aliases). Only binds set in this repo are listed, not
+# built-in or plugin defaults. Update this file when a bind changes.
+#
+# Columns: tool  mode  keys  action
+# nvim: <leader> = Space. Modes: n normal, v visual, t terminal.
+# tmux: prefix = C-b (default, not rebound). Modes: prefix, copy
+#       (copy-mode-vi).
+
+# ---- nvim: core (init.lua) ----
+nvim  n       <leader>t   open terminal in a 15-line split at the bottom
+nvim  n       <leader>p   paste from system clipboard
+nvim  v       <leader>y   yank selection to system clipboard
+nvim  v       <leader>/   search for the selected text
+nvim  n       <Esc>       clear search highlight
+nvim  n       J           jump to bottom of screen and center (replaces join lines)
+nvim  n       K           jump to top of screen and center (replaces keyword lookup)
+nvim  t       <Esc>       leave terminal mode (back to normal mode)
+nvim  n       <leader>l   open Lazy plugin manager
+
+# ---- nvim: buffers (bufferline) ----
+nvim  n       <M-h>       previous buffer
+nvim  n       <M-l>       next buffer
+nvim  n       <leader>bd  close current buffer (keeps the window layout)
+nvim  n       <leader>bh  close all buffers to the left
+nvim  n       <leader>bl  close all buffers to the right
+
+# ---- nvim: file tree (neo-tree) ----
+nvim  n       <leader>.   toggle file tree sidebar
+nvim  n       <leader>e   vertical split with file tree
+nvim  n       <leader>E   horizontal split with file tree
+nvim  n       <leader>gs  git status in a floating window
+nvim  neotree t           disabled (no-op) inside the file tree
+
+# ---- nvim: git (gitsigns) ----
+nvim  n       <leader>hb  blame current line (full commit message)
+nvim  n       <leader>hd  diff file against the index (staged)
+nvim  n       <leader>hD  diff file against the previous commit (~)
+nvim  n       <leader>hl  toggle inline git blame on the current line
+nvim  n       <leader>hw  toggle word-level git diff
+
+# ---- tmux: panes ----
+tmux  prefix  |           split pane side by side (left/right)
+tmux  prefix  -           split pane stacked (top/bottom)
+tmux  prefix  h           move to pane left
+tmux  prefix  j           move to pane down
+tmux  prefix  k           move to pane up
+tmux  prefix  l           move to pane right
+tmux  prefix  H           swap with last-active pane, then move left
+tmux  prefix  L           swap with last-active pane, then move right
+tmux  prefix  M-h         resize pane left by 2 (repeatable: keep tapping M-h)
+tmux  prefix  M-j         resize pane down by 2 (repeatable)
+tmux  prefix  M-k         resize pane up by 2 (repeatable)
+tmux  prefix  M-l         resize pane right by 2 (repeatable)
+
+# ---- tmux: copy mode (vi keys) ----
+tmux  copy    v           start selection (press again to clear it)
+tmux  copy    V           select whole line
+tmux  copy    y           copy selection to system clipboard and exit
+tmux  copy    Escape      exit copy mode
