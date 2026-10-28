@@ -4,6 +4,16 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 . "$ROOT_DIR/script/packages"   # sets SHELL_PKG and PACKAGES
 
+# --nga-dev: this machine is a dev VM on the NGA cluster; opt it into
+# ~/.config/shell/nga-dev (Vivado on /shared, etc.).
+NGA_DEV=0
+for arg in "$@"; do
+  case "$arg" in
+    --nga-dev) NGA_DEV=1 ;;
+    *) echo "usage: $0 [--nga-dev]" >&2; exit 2 ;;
+  esac
+done
+
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || {
     echo "missing required command: $1" >&2
@@ -69,6 +79,15 @@ if [ ! -f "$RC_DIR/$LOCAL" ]; then
 # the dotfiles repo (see $SHELL_PKG/.$SHELL_PKG/.gitignore). Sourced
 # automatically by $RC_DIR/${SHELL_PKG}rc if present.
 EOT
+fi
+
+# Opt-in lives in the untracked .local file so it stays per-machine;
+# the content it sources is tracked. Guarded so re-running never
+# adds the line twice.
+NGA_DEV_LINE='[ -f ~/.config/shell/nga-dev ] && . ~/.config/shell/nga-dev'
+if [ "$NGA_DEV" = 1 ] && ! grep -qxF "$NGA_DEV_LINE" "$RC_DIR/$LOCAL"; then
+    echo "==> enabling nga-dev environment in $RC_DIR/$LOCAL"
+    printf '\n# Added by script/bootstrap --nga-dev\n%s\n' "$NGA_DEV_LINE" >> "$RC_DIR/$LOCAL"
 fi
 
 echo "==> stowing dotfiles: ${PACKAGES[*]}"
