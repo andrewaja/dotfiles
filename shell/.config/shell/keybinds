@@ -22,6 +22,7 @@ nvim  n       <leader>l   open Lazy plugin manager
 # ---- nvim: buffers (bufferline) ----
 nvim  n       <M-h>       previous buffer
 nvim  n       <M-l>       next buffer
+nvim  n       <leader>bd  close current buffer (keeps the window layout)
 nvim  n       <leader>bh  close all buffers to the left
 nvim  n       <leader>bl  close all buffers to the right
 

@@ -55,6 +55,29 @@ vim.api.nvim_create_autocmd({ "TextYankPost" }, { --Shamelessly stolen from TheP
 	end
 })
 
+--Terminal windows get their own background and no line numbers, so a terminal
+--split is easy to tell apart from the window above it
+vim.api.nvim_create_autocmd({ "ColorScheme" }, {
+	pattern = { "*" },
+	callback = function()
+		local ok, base16 = pcall(require, "base16-colorscheme")
+		if ok and base16.colors and (vim.g.colors_name or ""):match("^base16%-") then
+			vim.api.nvim_set_hl(0, "TermNormal", { bg = base16.colors.base01 })
+		else
+			vim.api.nvim_set_hl(0, "TermNormal", { link = "NormalFloat" })
+		end
+	end
+})
+vim.api.nvim_create_autocmd({ "TermOpen", "BufWinEnter" }, {
+	pattern = { "term://*" },
+	callback = function()
+		vim.opt_local.number = false
+		vim.opt_local.relativenumber = false
+		vim.opt_local.signcolumn = "no"
+		vim.opt_local.winhighlight = "Normal:TermNormal,NormalNC:TermNormal"
+	end
+})
+
 function map(mode, lhs, rhs, opts)
 	local options = {noremap = true}
 	if opts then
