@@ -28,6 +28,8 @@ On every OS it also runs `script/install-nerd-font` (JetBrainsMono Nerd Font, fo
 
 Machine-specific overrides go in `~/.bash/bashrc.local` or `~/.zsh/zshrc.local` — both are untracked and sourced automatically.
 
+On a dev VM on the NGA cluster, run `script/bootstrap --nga-dev`. It adds one line to the `.local` file that sources `~/.config/shell/nga-dev` (Vivado from the `/shared` NFS mount, and anything else those VMs share). Re-running it never adds the line twice.
+
 ### Note: WSL mirrored networking + ZeroTier MTU hang
 
 **Symptom:** SSH from a WSL2 instance running in mirrored networking mode (`networkingMode=mirrored` in `.wslconfig`) hangs indefinitely at `SSH2_MSG_KEX_ECDH_REPLY`, after a clean TCP handshake and KEXINIT exchange. Ping over the same ZeroTier IP works fine; small packets pass, larger ones (like the key exchange payload) silently vanish.

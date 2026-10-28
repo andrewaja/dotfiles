@@ -1,0 +1,18 @@
+# ~/.config/shell/nga-dev -- environment for dev VMs on the NGA cluster.
+# Shared by bash and zsh. Stowed everywhere but only sourced where
+# `script/bootstrap --nga-dev` added it to the machine-local rc file.
+
+# ---- Vivado ----
+# Installed once on the /shared NFS mount, not per VM. This mirrors
+# what Vivado's settings64.sh sets, written out statically instead of
+# sourcing it: /shared is a hard NFS mount, so touching it at shell
+# startup (or putting it first in PATH, where every command lookup
+# stats it) would hang new shells whenever the storage node is down.
+# Appended to PATH so only commands found nowhere else reach /shared.
+# Bump the version here after installing a new release.
+XILINX_ROOT=/shared/Xilinx/2026.1
+export XILINX_VIVADO="$XILINX_ROOT/Vivado"
+export XILINX_VITIS="$XILINX_ROOT/Vitis"
+export XILINX_HLS="$XILINX_ROOT/Vitis"
+export PATH="$PATH:$XILINX_VIVADO/bin:$XILINX_VITIS/bin"
+unset XILINX_ROOT
