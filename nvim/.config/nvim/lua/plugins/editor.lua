@@ -24,8 +24,9 @@ return {
 				map("n", "<leader>hd", gitsigns.diffthis)
 				map("n", "<leader>hD", function() gitsigns.diffthis("~") end)
 
-				map("n", "<leader>tb", gitsigns.toggle_current_line_blame)
-				map("n", "<leader>tw", gitsigns.toggle_word_diff)
+				--Toggles live under <leader>h so <leader>t (terminal) fires without a timeout wait
+				map("n", "<leader>hl", gitsigns.toggle_current_line_blame)
+				map("n", "<leader>hw", gitsigns.toggle_word_diff)
 			end
 		},
 	},
