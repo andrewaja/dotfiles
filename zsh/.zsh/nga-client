@@ -42,7 +42,7 @@ vivado@ajamian-dev() {
     # On the VM: "running <display> <version>" if this project's session is
     # up, else "nodir" or one "xpr <path>" line per .xpr (path relative to
     # the project; none if there are none).
-    out=$(ssh ajamian-dev bash -s -- "$name" "$version" <<'EOF'
+    out=$(ssh ajamian-dev bash -s -- ${(qq)name} ${(qq)version} <<'EOF'
 name=$1 want=$2
 dir=~/research/projects/$name
 pid=$(pgrep -f -- "^/usr/bin/xpra start :[0-9]+ .*--session-name=vivado-$name( |\$)" | head -1)
@@ -97,7 +97,9 @@ EOF
     fi
 
     # On the VM: start the session in that folder and print "<display> <version>".
-    out=$(ssh ajamian-dev bash -s -- "$name" "$version" "$workdir" "${xpr:t}" <<'EOF'
+    # ssh joins its arguments into one remote command line, so an unquoted
+    # empty $version would vanish and shift the rest; (qq) keeps it as ''.
+    out=$(ssh ajamian-dev bash -s -- ${(qq)name} ${(qq)version} ${(qq)workdir} ${(qq)xpr:t} <<'EOF'
 name=$1 want=$2 xpr=$4
 dir=~/research/projects/$name
 [ "$3" = . ] || dir=$dir/$3
