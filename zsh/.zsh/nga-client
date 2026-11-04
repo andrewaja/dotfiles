@@ -1,0 +1,137 @@
+# ~/.zsh/nga-client -- for a machine (the Mac) that drives the NGA
+# cluster's dev VMs from outside. zsh only. Stowed everywhere but only
+# sourced where `script/bootstrap --nga-client` added it to
+# ~/.zsh/zshrc.local. Needs an `ajamian-dev` entry in ~/.ssh/config and
+# the Xpra app; see ~/research/agent-skills/docs/nga-vivado.md.
+
+# Xpra client: the app ships no CLI on PATH; its bundle dir holds only the binary.
+export PATH="$PATH:/Applications/Xpra.app/Contents/MacOS"
+
+# Vivado GUI on ajamian-dev through xpra, one session per project:
+#   vivado@ajamian-dev [-v <version>] -p <name>
+# If that project's session is already running, just reattaches (and
+# refuses if -v asks for a different version). Otherwise it looks in
+# ~/research/projects/<name> on the VM (offering to create it if missing)
+# for Vivado projects (.xpr): one is opened directly, several give a
+# numbered list, none asks for a folder to open Vivado in (relative to the
+# project; default its top level). Vivado runs in the .xpr's folder (or
+# the chosen one), with its log, journal and temp dir pinned there by
+# absolute path, so nothing lands in ~ even after a Tcl `cd`.
+# -v picks an install on /shared/Xilinx (e.g. 2022.1); the default is the
+# newest one there. Vivado starts from a clean shell with only that
+# version's settings64.sh sourced, so the 2026.1 PATH from dotfiles
+# --nga-dev can't leak into older versions. Sessions are named
+# vivado-<name> and take the first free display from :100 up. Quit Vivado
+# (File > Exit) before `xpra stop :<display>` on the VM; it aborts if its
+# display disappears under it.
+vivado@ajamian-dev() {
+    local OPTIND=1 opt name= version= out reply sel workdir= xpr= display ver i
+    local -a xprs
+    while getopts p:v: opt; do
+        case $opt in
+            p) name=$OPTARG ;;
+            v) version=$OPTARG ;;
+            *) name= ; break ;;
+        esac
+    done
+    if [[ ! $name =~ '^[A-Za-z0-9._-]+$' || ( -n $version && ! $version =~ '^[0-9]{4}\.[0-9]+$' ) ]]; then
+        echo "usage: vivado@ajamian-dev [-v <version>] -p <project>   (project: letters, digits, . _ -; version: e.g. 2022.1)" >&2
+        return 2
+    fi
+
+    # On the VM: "running <display> <version>" if this project's session is
+    # up, else "nodir" or one "xpr <path>" line per .xpr (path relative to
+    # the project; none if there are none).
+    out=$(ssh ajamian-dev bash -s -- "$name" "$version" <<'EOF'
+name=$1 want=$2
+dir=~/research/projects/$name
+pid=$(pgrep -f -- "^/usr/bin/xpra start :[0-9]+ .*--session-name=vivado-$name( |\$)" | head -1)
+if [ -n "$pid" ]; then
+    cmd=$(tr '\0' ' ' < /proc/$pid/cmdline)
+    d=$(printf '%s' "$cmd" | grep -oE 'start :[0-9]+' | cut -d: -f2)
+    v=$(printf '%s' "$cmd" | grep -oE 'Xilinx/(Vivado/)?[0-9]{4}\.[0-9]+/' | head -1 | grep -oE '[0-9]{4}\.[0-9]+')
+    if [ -n "$want" ] && [ "$want" != "${v:-unknown}" ]; then
+        echo "vivado-$name is already running with Vivado ${v:-unknown} on :$d; quit it (File > Exit) to switch versions" >&2
+        exit 1
+    fi
+    echo "running $d ${v:-unknown}"
+    exit 0
+fi
+[ -d "$dir" ] || { echo nodir; exit 0; }
+cd "$dir" && find . \( -name .git -o -name .Xil \) -prune -o -name '*.xpr' -print | sed 's|^\./||' | sort | sed 's/^/xpr /'
+EOF
+    ) || return 1
+
+    if [[ $out == running\ * ]]; then
+        out=${out#running } display=${out%% *} ver=${out#* }
+        echo "vivado-$name (Vivado $ver) already running on ajamian-dev:$display"
+        xpra attach "ssh://ajamian-dev/$display" --ssh=ssh
+        return
+    fi
+    if [[ $out == nodir ]]; then
+        read -r "reply?~/research/projects/$name does not exist on ajamian-dev. Create it? [y/N] "
+        [[ $reply == [yY]* ]] || return 1
+        out=
+    fi
+    xprs=(${(f)"$(print -r -- "$out" | sed -n 's/^xpr //p')"})
+    if (( ${#xprs} == 1 )); then
+        xpr=$xprs[1]
+    elif (( ${#xprs} > 1 )); then
+        echo "Vivado projects under ~/research/projects/$name:"
+        for i in {1..${#xprs}}; do echo "  $i) $xprs[i]"; done
+        while :; do
+            read -r "sel?Open which? [1-${#xprs}] " || return 1
+            [[ $sel == <1-> ]] && (( sel <= ${#xprs} )) && break
+        done
+        xpr=$xprs[sel]
+    else
+        echo "No .xpr files under ~/research/projects/$name."
+        read -r "workdir?Open Vivado in (relative to the project; Enter for the top level): " || return 1
+    fi
+    [[ -n $xpr ]] && workdir=${xpr:h}
+    workdir=${${workdir:-.}%/}
+    if [[ ! $workdir =~ '^[A-Za-z0-9._/-]+$' || $workdir == /* || $workdir =~ '(^|/)\.\.(/|$)' ]]; then
+        echo "vivado@ajamian-dev: '$workdir' must be a path inside the project (letters, digits, . _ - /, no ..)" >&2
+        return 2
+    fi
+
+    # On the VM: start the session in that folder and print "<display> <version>".
+    out=$(ssh ajamian-dev bash -s -- "$name" "$version" "$workdir" "${xpr:t}" <<'EOF'
+name=$1 want=$2 xpr=$4
+dir=~/research/projects/$name
+[ "$3" = . ] || dir=$dir/$3
+# Settings scripts for a version; the two layouts AMD has used on /shared.
+settings() {
+    local f
+    for f in /shared/Xilinx/$1/Vivado/settings64.sh /shared/Xilinx/Vivado/$1/settings64.sh \
+             /shared/Xilinx/Vitis_HLS/$1/settings64.sh; do
+        [ -f "$f" ] && echo "$f"
+    done
+}
+if [ -z "$want" ]; then
+    want=$(ls -d /shared/Xilinx/[0-9]*.[0-9]*/Vivado /shared/Xilinx/Vivado/[0-9]*.[0-9]* 2>/dev/null \
+        | grep -oE '[0-9]{4}\.[0-9]+' | sort -V | tail -1)
+fi
+src=$(settings "$want" | sed 's/.*/source &;/' | tr '\n' ' ')
+if [ -z "$want" ] || [ -z "$src" ]; then
+    echo "no Vivado ${want:-install} under /shared/Xilinx" >&2
+    exit 1
+fi
+mkdir -p "$dir" || exit 1
+used=$(xpra list 2>/dev/null | grep -oE ':[0-9]+' | tr -d :)
+d=100
+while printf '%s\n' "$used" | grep -qx "$d" || [ -e /tmp/.X11-unix/X$d ]; do d=$((d + 1)); done
+xpra start :$d --daemon=yes --session-name=vivado-$name \
+    --start="bash --noprofile --norc -c '$src cd $dir && vivado $xpr -log $dir/vivado.log -journal $dir/vivado.jou -tempDir $dir/.Xil'" >/dev/null 2>&1
+for i in $(seq 20); do
+    xpra list 2>/dev/null | grep -q "LIVE session at :$d\$" && { echo "$d $want"; exit 0; }
+    sleep 0.5
+done
+echo "xpra session :$d did not come up" >&2
+exit 1
+EOF
+    ) || return 1
+    display=${out%% *} ver=${out#* }
+    echo "vivado-$name (Vivado $ver) on ajamian-dev:$display${xpr:+, opening $xpr}"
+    xpra attach "ssh://ajamian-dev/$display" --ssh=ssh
+}
