@@ -58,7 +58,8 @@ if [ -n "$pid" ]; then
     exit 0
 fi
 [ -d "$dir" ] || { echo nodir; exit 0; }
-cd "$dir" && find . \( -name .git -o -name .Xil \) -prune -o -name '*.xpr' -print | sed 's|^\./||' | sort | sed 's/^/xpr /'
+# -L: build trees may be symlinks into /shared/build (e.g. aved-v80/view).
+cd "$dir" && find -L . \( -name .git -o -name .Xil \) -prune -o -name '*.xpr' -print | sed 's|^\./||' | sort | sed 's/^/xpr /'
 EOF
     ) || return 1
 
