@@ -30,6 +30,8 @@ Machine-specific overrides go in `~/.bash/bashrc.local` or `~/.zsh/zshrc.local` 
 
 On a dev VM on the NGA cluster, run `script/bootstrap --nga-dev`. It adds one line to the `.local` file that sources `~/.config/shell/nga-dev` (Vivado from the `/shared` NFS mount, and anything else those VMs share). Re-running it never adds the line twice.
 
+On the machine that drives those VMs from outside (the Mac), run `script/bootstrap --nga-client`. It adds one line to `~/.zsh/zshrc.local` that sources `~/.zsh/nga-client`: the Xpra app's PATH entry and `vivado@ajamian-dev [-v <version>] -p <project>`, which opens Vivado on ajamian-dev through xpra (see `docs/nga-vivado.md` in the agent-skills repo). zsh only; it needs an `ajamian-dev` entry in `~/.ssh/config`.
+
 ### Note: WSL mirrored networking + ZeroTier MTU hang
 
 **Symptom:** SSH from a WSL2 instance running in mirrored networking mode (`networkingMode=mirrored` in `.wslconfig`) hangs indefinitely at `SSH2_MSG_KEX_ECDH_REPLY`, after a clean TCP handshake and KEXINIT exchange. Ping over the same ZeroTier IP works fine; small packets pass, larger ones (like the key exchange payload) silently vanish.

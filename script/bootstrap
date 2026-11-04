@@ -6,13 +6,21 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 # --nga-dev: this machine is a dev VM on the NGA cluster; opt it into
 # ~/.config/shell/nga-dev (Vivado on /shared, etc.).
+# --nga-client: this machine drives those VMs from outside (the Mac);
+# opt it into ~/.zsh/nga-client (vivado@ajamian-dev). zsh only.
 NGA_DEV=0
+NGA_CLIENT=0
 for arg in "$@"; do
   case "$arg" in
     --nga-dev) NGA_DEV=1 ;;
-    *) echo "usage: $0 [--nga-dev]" >&2; exit 2 ;;
+    --nga-client) NGA_CLIENT=1 ;;
+    *) echo "usage: $0 [--nga-dev] [--nga-client]" >&2; exit 2 ;;
   esac
 done
+if [ "$NGA_CLIENT" = 1 ] && [ "$SHELL_PKG" != zsh ]; then
+  echo "--nga-client needs zsh; this machine uses $SHELL_PKG" >&2
+  exit 2
+fi
 
 require_cmd() {
   command -v "$1" >/dev/null 2>&1 || {
@@ -88,6 +96,11 @@ NGA_DEV_LINE='[ -f ~/.config/shell/nga-dev ] && . ~/.config/shell/nga-dev'
 if [ "$NGA_DEV" = 1 ] && ! grep -qxF "$NGA_DEV_LINE" "$RC_DIR/$LOCAL"; then
     echo "==> enabling nga-dev environment in $RC_DIR/$LOCAL"
     printf '\n# Added by script/bootstrap --nga-dev\n%s\n' "$NGA_DEV_LINE" >> "$RC_DIR/$LOCAL"
+fi
+NGA_CLIENT_LINE='[ -f ~/.zsh/nga-client ] && . ~/.zsh/nga-client'
+if [ "$NGA_CLIENT" = 1 ] && ! grep -qxF "$NGA_CLIENT_LINE" "$RC_DIR/$LOCAL"; then
+    echo "==> enabling nga-client functions in $RC_DIR/$LOCAL"
+    printf '\n# Added by script/bootstrap --nga-client\n%s\n' "$NGA_CLIENT_LINE" >> "$RC_DIR/$LOCAL"
 fi
 
 echo "==> stowing dotfiles: ${PACKAGES[*]}"
