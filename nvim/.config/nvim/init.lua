@@ -33,6 +33,22 @@ vim.opt.splitbelow = true
 vim.opt.splitright = true
 vim.opt.termguicolors = true
 vim.opt.cmdheight = 0
+
+--Over SSH there is no clipboard tool, so "+y sends the text to the local
+--terminal as OSC 52 and the terminal sets the clipboard. Pasting stays with
+--the terminal (Cmd+V): terminals block programs from reading the clipboard,
+--so "+p gives back nvim's own last yank instead.
+if os.getenv("SSH_TTY") then
+	local osc52 = require("vim.ui.clipboard.osc52")
+	local function paste()
+		return { vim.fn.split(vim.fn.getreg(""), "\n"), vim.fn.getregtype("") }
+	end
+	vim.g.clipboard = {
+		name = "OSC 52",
+		copy = { ["+"] = osc52.copy("+"), ["*"] = osc52.copy("*") },
+		paste = { ["+"] = paste, ["*"] = paste },
+	}
+end
 --vim.cmd('colorscheme koehler')
 --vim.cmd('filetype plugin on')
 --vim.cmd('set wildmenu')
