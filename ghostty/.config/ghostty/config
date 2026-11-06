@@ -6,6 +6,10 @@ font-family = JetBrainsMono Nerd Font Mono
 
 # Same colors as Terminal.app's default "Pro" profile
 theme = Pro
+# ...except Pro's blues (#2009db, #0000ff), which are too dark to read on
+# its black background; ls shows directories in blue
+palette = 4=#5c78ff
+palette = 12=#8a9bff
 
 # Over SSH, install Ghostty's terminfo on the remote host (once per host)
 # and fall back to TERM=xterm-256color where that is not possible, so
