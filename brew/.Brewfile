@@ -22,4 +22,5 @@ brew "yq"          # proxmox-mgmt runbooks
 brew "python"      # modern python3; system one is 3.9 with no PyYAML
 
 # ---- apps ----
+cask "ghostty"        # terminal; config in the ghostty stow package
 cask "zerotier-one"   # pkg installer; prompts for sudo during brew bundle

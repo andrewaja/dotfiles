@@ -1,0 +1,18 @@
+# Ghostty terminal (macOS). Stowed to ~/.config/ghostty/config.
+# Check after editing: ghostty +validate-config
+
+# The Nerd Font that script/install-nerd-font installs
+font-family = JetBrainsMono Nerd Font Mono
+
+# Same colors as Terminal.app's default "Pro" profile
+theme = Pro
+
+# Over SSH, install Ghostty's terminfo on the remote host (once per host)
+# and fall back to TERM=xterm-256color where that is not possible, so
+# tmux and nvim on the VMs know the terminal
+shell-integration-features = ssh-terminfo,ssh-env
+
+# Programs may set the clipboard (OSC 52: nvim and tmux over SSH);
+# reading it asks first. Both are Ghostty's defaults, stated on purpose.
+clipboard-write = allow
+clipboard-read = ask
