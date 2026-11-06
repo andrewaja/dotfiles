@@ -11,10 +11,14 @@ theme = Pro
 palette = 4=#5c78ff
 palette = 12=#8a9bff
 
+# Block cursor. Shell integration would switch it to a bar at the prompt,
+# hence no-cursor below. (nvim still sets its own shape per mode.)
+cursor-style = block
+
 # Over SSH, install Ghostty's terminfo on the remote host (once per host)
 # and fall back to TERM=xterm-256color where that is not possible, so
 # tmux and nvim on the VMs know the terminal
-shell-integration-features = ssh-terminfo,ssh-env
+shell-integration-features = no-cursor,ssh-terminfo,ssh-env
 
 # Programs may set the clipboard (OSC 52: nvim and tmux over SSH);
 # reading it asks first. Both are Ghostty's defaults, stated on purpose.
