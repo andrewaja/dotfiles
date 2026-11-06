@@ -19,6 +19,7 @@ vim.opt.showbreak = "> "
 
 vim.opt.tabstop = 4 --spaces
 vim.opt.shiftwidth = 4
+vim.opt.expandtab = true --insert spaces, not tab characters
 
 vim.opt.fileencoding = "utf-8"
 vim.opt.pumheight = 5
