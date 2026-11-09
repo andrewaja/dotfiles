@@ -11,12 +11,17 @@ export PATH="$PATH:/Applications/Xpra.app/Contents/MacOS"
 #   vivado@ajamian-dev [-v <version>] -p <name>
 # If that project's session is already running, just reattaches (and
 # refuses if -v asks for a different version). Otherwise it looks in
-# ~/research/projects/<name> on the VM (offering to create it if missing)
-# for Vivado projects (.xpr): one is opened directly, several give a
-# numbered list, none asks for a folder to open Vivado in (relative to the
-# project; default its top level). Vivado runs in the .xpr's folder (or
-# the chosen one), with its log, journal and temp dir pinned there by
-# absolute path, so nothing lands in ~ even after a Tcl `cd`.
+# ~/research/projects/<name> on the VM for Vivado projects (.xpr): one is
+# opened directly, several give a numbered list, none asks for a folder to
+# open Vivado in (relative to the project; default its top level). Vivado
+# runs in the .xpr's folder (or the chosen one), with its log, journal and
+# temp dir pinned there by absolute path, so nothing lands in ~ even after
+# a Tcl `cd`.
+# A missing project is offered for creation: it asks for a build folder
+# (default /shared/build/<name>), then lays out rtl/ sim/ bd/ constr/
+# scripts/, a `build` link to the build folder, a .gitignore, and
+# scripts/create_project.tcl, which Vivado runs at once to create the
+# project in build/ from those folders.
 # -v picks an install on /shared/Xilinx (e.g. 2022.1); the default is the
 # newest one there. Vivado starts from a clean shell with only that
 # version's settings64.sh sourced, so the 2026.1 PATH from dotfiles
@@ -26,6 +31,7 @@ export PATH="$PATH:/Applications/Xpra.app/Contents/MacOS"
 # display disappears under it.
 vivado@ajamian-dev() {
     local OPTIND=1 opt name= version= out reply sel workdir= xpr= display ver i
+    local builddir= tcl=
     local -a xprs
     while getopts p:v: opt; do
         case $opt in
@@ -72,10 +78,79 @@ EOF
     if [[ $out == nodir ]]; then
         read -r "reply?~/research/projects/$name does not exist on ajamian-dev. Create it? [y/N] "
         [[ $reply == [yY]* ]] || return 1
-        out=
+        read -r "builddir?Build folder [/shared/build/$name]: " || return 1
+        builddir=${${builddir:-/shared/build/$name}%/}
+        if [[ ! $builddir =~ '^/[A-Za-z0-9._/-]+$' || $builddir =~ '(^|/)\.\.(/|$)' ]]; then
+            echo "vivado@ajamian-dev: '$builddir' must be an absolute path (letters, digits, . _ - /, no ..)" >&2
+            return 2
+        fi
+
+        # On the VM: the project's folders, the build link, a .gitignore and
+        # scripts/create_project.tcl (Vivado runs it below).
+        ssh ajamian-dev bash -s -- ${(qq)name} ${(qq)builddir} <<'EOF' || return 1
+name=$1 build=$2
+dir=~/research/projects/$name
+mkdir -p "$dir"/rtl "$dir"/sim "$dir"/bd "$dir"/constr "$dir"/scripts "$build" || exit 1
+ln -sfn "$build" "$dir/build" || exit 1
+cat > "$dir/.gitignore" <<'X'
+# Vivado project and build output (made by scripts/create_project.tcl)
+build
+.Xil/
+*.jou
+*.log
+X
+cat > "$dir/scripts/create_project.tcl" <<'X'
+# Creates the Vivado project in build/ from the sources in this repo:
+#   rtl/     design sources (.sv .v .vhd)
+#   sim/     testbenches (.sv .v)
+#   bd/      block designs, as exported with write_bd_tcl (.tcl)
+#   constr/  constraints (.xdc)
+# Rerun after adding files; -force replaces an existing project.
+#   vivado -mode batch -source scripts/create_project.tcl -tclargs -force
+# or, in the Vivado Tcl console: source scripts/create_project.tcl
+set part xcv80-lsva4737-2MHP-e-S	;# the Alveo V80
+
+set repo [file normalize [file join [file dirname [info script]] ..]]
+set name [file tail $repo]
+# Create the project at build/'s real location (build/ is a link): Vivado
+# reopens projects at their real path, and paths stored relative to the
+# link would break
+set dir [file dirname [file normalize [file join $repo build _]]]
+# Kept in a namespace of our own: Vivado's Tcl leaks globals (dir among
+# them) while block designs are recreated below
+namespace eval create_project_tcl {}
+set create_project_tcl::xpr [file join $dir $name.xpr]
+if {[file exists $create_project_tcl::xpr] && [lsearch $argv -force] < 0} {
+    error "build/$name.xpr exists; rerun with -force to replace it"
+}
+create_project -force $name $dir -part $part
+
+proc add_matching {fileset pattern} {
+    set files [glob -nocomplain $pattern]
+    if {[llength $files]} { add_files -norecurse -fileset $fileset $files }
+}
+foreach ext {sv v vhd} { add_matching sources_1 [file join $repo rtl *.$ext] }
+foreach ext {sv v} { add_matching sim_1 [file join $repo sim *.$ext] }
+add_matching constrs_1 [file join $repo constr *.xdc]
+# Each block design script recreates its design; its HDL wrapper is
+# generated and added as a design source
+foreach script [glob -nocomplain [file join $repo bd *.tcl]] {
+    source $script
+    set bd [get_files [current_bd_design].bd]
+    add_files -norecurse [make_wrapper -files $bd -top]
+}
+update_compile_order -fileset sources_1
+puts "create_project: created $create_project_tcl::xpr"
+X
+EOF
+        echo "Created ~/research/projects/$name (build -> $builddir)"
+        workdir=build tcl=scripts/create_project.tcl
+    else
+        xprs=(${(f)"$(print -r -- "$out" | sed -n 's/^xpr //p')"})
     fi
-    xprs=(${(f)"$(print -r -- "$out" | sed -n 's/^xpr //p')"})
-    if (( ${#xprs} == 1 )); then
+    if [[ -n $tcl ]]; then
+        :
+    elif (( ${#xprs} == 1 )); then
         xpr=$xprs[1]
     elif (( ${#xprs} > 1 )); then
         echo "Vivado projects under ~/research/projects/$name:"
@@ -99,9 +174,11 @@ EOF
     # On the VM: start the session in that folder and print "<display> <version>".
     # ssh joins its arguments into one remote command line, so an unquoted
     # empty $version would vanish and shift the rest; (qq) keeps it as ''.
-    out=$(ssh ajamian-dev bash -s -- ${(qq)name} ${(qq)version} ${(qq)workdir} ${(qq)xpr:t} <<'EOF'
+    out=$(ssh ajamian-dev bash -s -- ${(qq)name} ${(qq)version} ${(qq)workdir} ${(qq)xpr:t} ${(qq)tcl} <<'EOF'
 name=$1 want=$2 xpr=$4
 dir=~/research/projects/$name
+# A new project: Vivado runs its create_project.tcl instead of opening an .xpr
+[ -n "$5" ] && xpr="-source $dir/$5"
 [ "$3" = . ] || dir=$dir/$3
 # Settings scripts for a version; the two layouts AMD has used on /shared.
 settings() {
@@ -135,6 +212,6 @@ exit 1
 EOF
     ) || return 1
     display=${out%% *} ver=${out#* }
-    echo "vivado-$name (Vivado $ver) on ajamian-dev:$display${xpr:+, opening $xpr}"
+    echo "vivado-$name (Vivado $ver) on ajamian-dev:$display${xpr:+, opening $xpr}${tcl:+, creating the project with $tcl}"
     xpra attach "ssh://ajamian-dev/$display" --ssh=ssh
 }
