@@ -21,7 +21,8 @@ export PATH="$PATH:/Applications/Xpra.app/Contents/MacOS"
 # (default /shared/build/<name>), then lays out rtl/ sim/ bd/ constr/
 # scripts/, a `build` link to the build folder, a .gitignore, and
 # scripts/create_project.tcl, which Vivado runs at once to create the
-# project in build/ from those folders.
+# project in build/ from those folders. The folder becomes a git repo
+# (branch main, no remote) with the layout as its first commit.
 # -v picks an install on /shared/Xilinx (e.g. 2022.1); the default is the
 # newest one there. Vivado starts from a clean shell with only that
 # version's settings64.sh sourced, so the 2026.1 PATH from dotfiles
@@ -142,8 +143,14 @@ foreach script [glob -nocomplain [file join $repo bd *.tcl]] {
 update_compile_order -fileset sources_1
 puts "create_project: created $create_project_tcl::xpr"
 X
+# A git repo with the layout as its first commit; no remote. Git keeps no
+# empty folders, so each gets a .gitkeep.
+for d in rtl sim bd constr; do touch "$dir/$d/.gitkeep"; done
+git -C "$dir" init -q -b main && git -C "$dir" add -A &&
+    git -C "$dir" commit -q -m "Project layout from vivado@ajamian-dev" ||
+    echo "git: no first commit in $dir (check git's user.name and user.email)" >&2
 EOF
-        echo "Created ~/research/projects/$name (build -> $builddir)"
+        echo "Created ~/research/projects/$name (build -> $builddir; git repo, no remote)"
         workdir=build tcl=scripts/create_project.tcl
     else
         xprs=(${(f)"$(print -r -- "$out" | sed -n 's/^xpr //p')"})
