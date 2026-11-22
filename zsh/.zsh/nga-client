@@ -1,38 +1,48 @@
 # ~/.zsh/nga-client -- for a machine (the Mac) that drives the NGA
 # cluster's dev VMs from outside. zsh only. Stowed everywhere but only
 # sourced where `script/bootstrap --nga-client` added it to
-# ~/.zsh/zshrc.local. Needs an `ajamian-dev` entry in ~/.ssh/config and
-# the Xpra app; see ~/research/agent-skills/docs/nga-vivado.md.
+# ~/.zsh/zshrc.local. Needs ssh access to the dev VM (e.g. an
+# ~/.ssh/config entry) and the Xpra app; see
+# ~/research/agent-skills/docs/nga-vivado.md.
 
 # Xpra client: the app ships no CLI on PATH; its bundle dir holds only the binary.
 export PATH="$PATH:/Applications/Xpra.app/Contents/MacOS"
 
-# Vivado GUI on ajamian-dev through xpra, one session per project:
-#   vivado@ajamian-dev [-v <version>] -p <name>
+# Settings for vivado@ (below)
+NGA_VIVADO_PROJECTS=research/projects     # project folders on the VM, under ~
+NGA_VIVADO_BUILD=/shared/build            # default build root for new projects
+NGA_VIVADO_PART=xcv80-lsva4737-2MHP-e-S   # part for new projects (the Alveo V80)
+NGA_VIVADO_VERSION=                       # default -v; empty: newest on /shared/Xilinx
+
+# Vivado GUI on a dev VM through xpra, one session per project:
+#   vivado@ <host> [-v <version>] -p <name>
+# <host> is anything ssh takes: a ~/.ssh/config name, or user@address.
 # If that project's session is already running, just reattaches (and
 # refuses if -v asks for a different version). Otherwise it looks in
-# ~/research/projects/<name> on the VM for Vivado projects (.xpr): one is
-# opened directly, several give a numbered list, none asks for a folder to
-# open Vivado in (relative to the project; default its top level). Vivado
-# runs in the .xpr's folder (or the chosen one), with its log, journal and
-# temp dir pinned there by absolute path, so nothing lands in ~ even after
-# a Tcl `cd`.
+# ~/$NGA_VIVADO_PROJECTS/<name> on the VM for Vivado projects (.xpr): one
+# is opened directly, several give a numbered list, none asks for a folder
+# to open Vivado in (relative to the project; default its top level).
+# Vivado runs in the .xpr's folder (or the chosen one), with its log,
+# journal and temp dir pinned there by absolute path, so nothing lands in
+# ~ even after a Tcl `cd`.
 # A missing project is offered for creation: it asks for a build folder
-# (default /shared/build/<name>), then lays out rtl/ sim/ bd/ constr/
+# (default $NGA_VIVADO_BUILD/<name>), then lays out rtl/ sim/ bd/ constr/
 # scripts/, a `build` link to the build folder, a .gitignore, and
-# scripts/create_project.tcl, which Vivado runs at once to create the
-# project in build/ from those folders. The folder becomes a git repo
-# (branch main, no remote) with the layout as its first commit.
-# -v picks an install on /shared/Xilinx (e.g. 2022.1); the default is the
-# newest one there. Vivado starts from a clean shell with only that
-# version's settings64.sh sourced, so the 2026.1 PATH from dotfiles
-# --nga-dev can't leak into older versions. Sessions are named
-# vivado-<name> and take the first free display from :100 up. Quit Vivado
-# (File > Exit) before `xpra stop :<display>` on the VM; it aborts if its
-# display disappears under it.
-vivado@ajamian-dev() {
+# scripts/create_project.tcl (part $NGA_VIVADO_PART), which Vivado runs at
+# once to create the project in build/ from those folders. The folder
+# becomes a git repo (branch main, no remote) with the layout as its first
+# commit.
+# -v picks an install on /shared/Xilinx (e.g. 2022.1); the default is
+# $NGA_VIVADO_VERSION, else the newest one there. Vivado starts from a
+# clean shell with only that version's settings64.sh sourced, so the
+# 2026.1 PATH from dotfiles --nga-dev can't leak into older versions.
+# Sessions are named vivado-<name> and take the first free display from
+# :100 up. Quit Vivado (File > Exit) before `xpra stop :<display>` on the
+# VM; it aborts if its display disappears under it.
+vivado@() {
+    local host=$1; shift 2>/dev/null
     local OPTIND=1 opt name= version= out reply sel workdir= xpr= display ver i
-    local builddir= tcl=
+    local builddir= tcl= proj=$NGA_VIVADO_PROJECTS part=$NGA_VIVADO_PART
     local -a xprs
     while getopts p:v: opt; do
         case $opt in
@@ -41,17 +51,17 @@ vivado@ajamian-dev() {
             *) name= ; break ;;
         esac
     done
-    if [[ ! $name =~ '^[A-Za-z0-9._-]+$' || ( -n $version && ! $version =~ '^[0-9]{4}\.[0-9]+$' ) ]]; then
-        echo "usage: vivado@ajamian-dev [-v <version>] -p <project>   (project: letters, digits, . _ -; version: e.g. 2022.1)" >&2
+    if [[ ! $host =~ '^[A-Za-z0-9._@-]+$' || $host == -* || ! $name =~ '^[A-Za-z0-9._-]+$' || ( -n $version && ! $version =~ '^[0-9]{4}\.[0-9]+$' ) ]]; then
+        echo "usage: vivado@ <host> [-v <version>] -p <project>   (host: ssh name or user@address; project: letters, digits, . _ -; version: e.g. 2022.1)" >&2
         return 2
     fi
 
     # On the VM: "running <display> <version>" if this project's session is
     # up, else "nodir" or one "xpr <path>" line per .xpr (path relative to
     # the project; none if there are none).
-    out=$(ssh ajamian-dev bash -s -- ${(qq)name} ${(qq)version} <<'EOF'
-name=$1 want=$2
-dir=~/research/projects/$name
+    out=$(ssh $host bash -s -- ${(qq)proj} ${(qq)name} ${(qq)version} <<'EOF'
+proj=$1 name=$2 want=$3
+dir=~/$proj/$name
 pid=$(pgrep -f -- "^/usr/bin/xpra start :[0-9]+ .*--session-name=vivado-$name( |\$)" | head -1)
 if [ -n "$pid" ]; then
     cmd=$(tr '\0' ' ' < /proc/$pid/cmdline)
@@ -72,25 +82,25 @@ EOF
 
     if [[ $out == running\ * ]]; then
         out=${out#running } display=${out%% *} ver=${out#* }
-        echo "vivado-$name (Vivado $ver) already running on ajamian-dev:$display"
-        xpra attach "ssh://ajamian-dev/$display" --ssh=ssh
+        echo "vivado-$name (Vivado $ver) already running on $host:$display"
+        xpra attach "ssh://$host/$display" --ssh=ssh
         return
     fi
     if [[ $out == nodir ]]; then
-        read -r "reply?~/research/projects/$name does not exist on ajamian-dev. Create it? [y/N] "
+        read -r "reply?~/$proj/$name does not exist on $host. Create it? [y/N] "
         [[ $reply == [yY]* ]] || return 1
-        read -r "builddir?Build folder [/shared/build/$name]: " || return 1
-        builddir=${${builddir:-/shared/build/$name}%/}
+        read -r "builddir?Build folder [$NGA_VIVADO_BUILD/$name]: " || return 1
+        builddir=${${builddir:-$NGA_VIVADO_BUILD/$name}%/}
         if [[ ! $builddir =~ '^/[A-Za-z0-9._/-]+$' || $builddir =~ '(^|/)\.\.(/|$)' ]]; then
-            echo "vivado@ajamian-dev: '$builddir' must be an absolute path (letters, digits, . _ - /, no ..)" >&2
+            echo "vivado@ $host: '$builddir' must be an absolute path (letters, digits, . _ - /, no ..)" >&2
             return 2
         fi
 
         # On the VM: the project's folders, the build link, a .gitignore and
         # scripts/create_project.tcl (Vivado runs it below).
-        ssh ajamian-dev bash -s -- ${(qq)name} ${(qq)builddir} <<'EOF' || return 1
-name=$1 build=$2
-dir=~/research/projects/$name
+        ssh $host bash -s -- ${(qq)proj} ${(qq)name} ${(qq)builddir} ${(qq)part} ${(qq)host} <<'EOF' || return 1
+proj=$1 name=$2 build=$3 part=$4 host=$5
+dir=~/$proj/$name
 mkdir -p "$dir"/rtl "$dir"/sim "$dir"/bd "$dir"/constr "$dir"/scripts "$build" || exit 1
 ln -sfn "$build" "$dir/build" || exit 1
 cat > "$dir/.gitignore" <<'X'
@@ -109,7 +119,7 @@ cat > "$dir/scripts/create_project.tcl" <<'X'
 # Rerun after adding files; -force replaces an existing project.
 #   vivado -mode batch -source scripts/create_project.tcl -tclargs -force
 # or, in the Vivado Tcl console: source scripts/create_project.tcl
-set part xcv80-lsva4737-2MHP-e-S	;# the Alveo V80
+set part @PART@
 
 set repo [file normalize [file join [file dirname [info script]] ..]]
 set name [file tail $repo]
@@ -143,14 +153,15 @@ foreach script [glob -nocomplain [file join $repo bd *.tcl]] {
 update_compile_order -fileset sources_1
 puts "create_project: created $create_project_tcl::xpr"
 X
+sed -i "s|@PART@|$part|" "$dir/scripts/create_project.tcl" || exit 1
 # A git repo with the layout as its first commit; no remote. Git keeps no
 # empty folders, so each gets a .gitkeep.
 for d in rtl sim bd constr; do touch "$dir/$d/.gitkeep"; done
 git -C "$dir" init -q -b main && git -C "$dir" add -A &&
-    git -C "$dir" commit -q -m "Project layout from vivado@ajamian-dev" ||
+    git -C "$dir" commit -q -m "Project layout from vivado@$host" ||
     echo "git: no first commit in $dir (check git's user.name and user.email)" >&2
 EOF
-        echo "Created ~/research/projects/$name (build -> $builddir; git repo, no remote)"
+        echo "Created $host:~/$proj/$name (build -> $builddir; git repo, no remote)"
         workdir=build tcl=scripts/create_project.tcl
     else
         xprs=(${(f)"$(print -r -- "$out" | sed -n 's/^xpr //p')"})
@@ -160,7 +171,7 @@ EOF
     elif (( ${#xprs} == 1 )); then
         xpr=$xprs[1]
     elif (( ${#xprs} > 1 )); then
-        echo "Vivado projects under ~/research/projects/$name:"
+        echo "Vivado projects under $host:~/$proj/$name:"
         for i in {1..${#xprs}}; do echo "  $i) $xprs[i]"; done
         while :; do
             read -r "sel?Open which? [1-${#xprs}] " || return 1
@@ -168,25 +179,25 @@ EOF
         done
         xpr=$xprs[sel]
     else
-        echo "No .xpr files under ~/research/projects/$name."
+        echo "No .xpr files under $host:~/$proj/$name."
         read -r "workdir?Open Vivado in (relative to the project; Enter for the top level): " || return 1
     fi
     [[ -n $xpr ]] && workdir=${xpr:h}
     workdir=${${workdir:-.}%/}
     if [[ ! $workdir =~ '^[A-Za-z0-9._/-]+$' || $workdir == /* || $workdir =~ '(^|/)\.\.(/|$)' ]]; then
-        echo "vivado@ajamian-dev: '$workdir' must be a path inside the project (letters, digits, . _ - /, no ..)" >&2
+        echo "vivado@ $host: '$workdir' must be a path inside the project (letters, digits, . _ - /, no ..)" >&2
         return 2
     fi
 
     # On the VM: start the session in that folder and print "<display> <version>".
     # ssh joins its arguments into one remote command line, so an unquoted
     # empty $version would vanish and shift the rest; (qq) keeps it as ''.
-    out=$(ssh ajamian-dev bash -s -- ${(qq)name} ${(qq)version} ${(qq)workdir} ${(qq)xpr:t} ${(qq)tcl} <<'EOF'
-name=$1 want=$2 xpr=$4
-dir=~/research/projects/$name
+    out=$(ssh $host bash -s -- ${(qq)proj} ${(qq)name} ${(qq)${version:-$NGA_VIVADO_VERSION}} ${(qq)workdir} ${(qq)xpr:t} ${(qq)tcl} <<'EOF'
+proj=$1 name=$2 want=$3 xpr=$5
+dir=~/$proj/$name
 # A new project: Vivado runs its create_project.tcl instead of opening an .xpr
-[ -n "$5" ] && xpr="-source $dir/$5"
-[ "$3" = . ] || dir=$dir/$3
+[ -n "$6" ] && xpr="-source $dir/$6"
+[ "$4" = . ] || dir=$dir/$4
 # Settings scripts for a version; the two layouts AMD has used on /shared.
 settings() {
     local f
@@ -219,6 +230,7 @@ exit 1
 EOF
     ) || return 1
     display=${out%% *} ver=${out#* }
-    echo "vivado-$name (Vivado $ver) on ajamian-dev:$display${xpr:+, opening $xpr}${tcl:+, creating the project with $tcl}"
-    xpra attach "ssh://ajamian-dev/$display" --ssh=ssh
+    echo "vivado-$name (Vivado $ver) on $host:$display${xpr:+, opening $xpr}${tcl:+, creating the project with $tcl}"
+    xpra attach "ssh://$host/$display" --ssh=ssh
 }
+
