@@ -12,7 +12,7 @@ export PATH="$PATH:/Applications/Xpra.app/Contents/MacOS"
 NGA_VIVADO_PROJECTS=research/projects     # project folders on the VM, under ~
 NGA_VIVADO_BUILD=/shared/build            # default build root for new projects
 NGA_VIVADO_PART=xcv80-lsva4737-2MHP-e-S   # part for new projects (the Alveo V80)
-NGA_VIVADO_VERSION=                       # default -v; empty: newest on /shared/Xilinx
+NGA_VIVADO_VERSION=                       # default -v; empty: newest on /shared/tools/Xilinx
 
 # Vivado GUI on a dev VM through xpra, one session per project:
 #   vivado@ <host> [-v <version>] -p <name>
@@ -32,7 +32,7 @@ NGA_VIVADO_VERSION=                       # default -v; empty: newest on /shared
 # once to create the project in build/ from those folders. The folder
 # becomes a git repo (branch main, no remote) with the layout as its first
 # commit.
-# -v picks an install on /shared/Xilinx (e.g. 2022.1); the default is
+# -v picks an install on /shared/tools/Xilinx (e.g. 2022.1); the default is
 # $NGA_VIVADO_VERSION, else the newest one there. Vivado starts from a
 # clean shell with only that version's settings64.sh sourced, so the
 # 2026.1 PATH from dotfiles --nga-dev can't leak into older versions.
@@ -201,18 +201,18 @@ dir=~/$proj/$name
 # Settings scripts for a version; the two layouts AMD has used on /shared.
 settings() {
     local f
-    for f in /shared/Xilinx/$1/Vivado/settings64.sh /shared/Xilinx/Vivado/$1/settings64.sh \
-             /shared/Xilinx/Vitis_HLS/$1/settings64.sh; do
+    for f in /shared/tools/Xilinx/$1/Vivado/settings64.sh /shared/tools/Xilinx/Vivado/$1/settings64.sh \
+             /shared/tools/Xilinx/Vitis_HLS/$1/settings64.sh; do
         [ -f "$f" ] && echo "$f"
     done
 }
 if [ -z "$want" ]; then
-    want=$(ls -d /shared/Xilinx/[0-9]*.[0-9]*/Vivado /shared/Xilinx/Vivado/[0-9]*.[0-9]* 2>/dev/null \
+    want=$(ls -d /shared/tools/Xilinx/[0-9]*.[0-9]*/Vivado /shared/tools/Xilinx/Vivado/[0-9]*.[0-9]* 2>/dev/null \
         | grep -oE '[0-9]{4}\.[0-9]+' | sort -V | tail -1)
 fi
 src=$(settings "$want" | sed 's/.*/source &;/' | tr '\n' ' ')
 if [ -z "$want" ] || [ -z "$src" ]; then
-    echo "no Vivado ${want:-install} under /shared/Xilinx" >&2
+    echo "no Vivado ${want:-install} under /shared/tools/Xilinx" >&2
     exit 1
 fi
 mkdir -p "$dir" || exit 1

@@ -10,7 +10,7 @@
 # stats it) would hang new shells whenever the storage node is down.
 # Appended to PATH so only commands found nowhere else reach /shared.
 # Bump the version here after installing a new release.
-XILINX_ROOT=/shared/Xilinx/2026.1
+XILINX_ROOT=/shared/tools/Xilinx/2026.1
 export XILINX_VIVADO="$XILINX_ROOT/Vivado"
 export XILINX_VITIS="$XILINX_ROOT/Vitis"
 export XILINX_HLS="$XILINX_ROOT/Vitis"
